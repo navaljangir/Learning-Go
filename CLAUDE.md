@@ -16,6 +16,52 @@ This repository tracks my journey learning Go for backend development. Go is ide
 
 ---
 
+## Learning Files (Start Here!)
+
+```
+learn/
+├── 00_commands_reference.md   # Go commands cheat sheet
+├── 01_basics/main.go          # Variables, types, printing
+├── 02_functions/main.go       # Functions, parameters, returns
+├── 03_format_specifiers/main.go  # Printf, %s, %d, \n explained
+├── 04_simple_server/main.go   # First HTTP server
+└── 05_go_concepts/main.go     # Structs, pointers, errors, goroutines, channels
+```
+
+**Run any file:**
+```bash
+cd learn/01_basics && go run main.go
+```
+
+---
+
+## Go vs Node.js vs C++ (Quick Comparison)
+
+| Aspect | Go | Node.js | C++ |
+|--------|-----|---------|-----|
+| **Install** | Just Go (all-in-one) | Node + npm + packages | Compiler + linker + build system |
+| **Output** | Single binary | Needs Node runtime | Single binary |
+| **Package manager** | Built-in (`go get`) | npm | Manual (vcpkg, conan) |
+| **Concurrency** | Goroutines (manual) | Event loop (automatic) | Threads (manual) |
+| **Types** | Static | Dynamic | Static |
+| **Error handling** | `if err != nil` | try/catch | try/catch + exceptions |
+
+---
+
+## Key Concepts to Learn (Coming from JS)
+
+| Concept | In JavaScript | In Go |
+|---------|---------------|-------|
+| Objects | `{ name: "x" }` | Structs |
+| Classes | `class User {}` | Structs + methods |
+| Async/await | Automatic event loop | Goroutines + channels |
+| null/undefined | Both exist | Only `nil` |
+| Types | Dynamic (`let x`) | Static (`var x int`) |
+| Errors | try/catch | Return `error` value |
+| Pointers | Hidden | Explicit (`*`, `&`) |
+
+---
+
 ## Go Installation
 
 ### macOS
@@ -193,13 +239,33 @@ myapp/
 
 ---
 
+## go.mod Explained (like package.json)
+
+```go
+module github.com/tejas/learningGo   // Module name (unique identifier)
+
+go 1.21                               // Go version
+
+require (
+    github.com/gin-gonic/gin v1.9.1  // Dependencies (like "dependencies" in package.json)
+)
+```
+
+| File | Purpose | Node.js Equivalent |
+|------|---------|-------------------|
+| `go.mod` | Module definition & deps | `package.json` |
+| `go.sum` | Checksums (auto-generated) | `package-lock.json` |
+
+---
+
 ## Useful Commands
 
 ### Module Management
 ```bash
-go mod init github.com/username/project   # Initialize module
-go mod tidy                               # Clean up dependencies
-go get package@version                    # Add/update dependency
+go mod init github.com/username/project   # Initialize module (npm init)
+go mod tidy                               # Sync dependencies (npm install)
+go get github.com/pkg                     # Add package (npm install pkg)
+go get github.com/pkg@v1.2.3              # Specific version
 go mod vendor                             # Vendor dependencies
 ```
 
