@@ -4,6 +4,18 @@ A structured learning path for mastering Go (Golang) with a focus on backend dev
 
 ---
 
+## Claude Code Instructions
+
+> **For Claude:** Follow these preferences when helping with this project.
+
+- **Create documentation**: When explaining new Go concepts, create a `.md` file in `learn/docs/` folder
+- **User context**: User is learning Go, coming from Node.js background
+- **Use analogies**: Compare Go patterns to Node.js equivalents when helpful
+- **Beginner-friendly**: Keep explanations simple with practical code examples
+- **Docs location**: `learn/docs/XX_topic_name.md` (numbered for order)
+
+---
+
 ## Project Overview
 
 This repository tracks my journey learning Go for backend development. Go is ideal for backend services due to its simplicity, strong concurrency support, fast compilation, and excellent standard library.
