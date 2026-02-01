@@ -62,6 +62,36 @@ GOOS=windows GOARCH=amd64 go build -o myapp.exe
 
 ---
 
+## Installing Global Tools (like npm install -g)
+
+```bash
+# Install a CLI tool globally
+go install github.com/air-verse/air@latest           # Hot reload
+go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest  # Linter
+go install github.com/swaggo/swag/cmd/swag@latest    # Swagger generator
+```
+
+**Where do tools get installed?**
+```bash
+go env GOPATH    # Shows: C:\Users\yourname\go
+# Tools go to: C:\Users\yourname\go\bin\
+```
+
+**Add to PATH (one time setup):**
+
+| OS | How to add Go bin to PATH |
+|----|---------------------------|
+| **Windows** | Add `%USERPROFILE%\go\bin` to System Environment Variables |
+| **macOS/Linux** | Add `export PATH=$PATH:$(go env GOPATH)/bin` to `~/.zshrc` or `~/.bashrc` |
+
+**Windows step-by-step:**
+1. `Win + R` → type `sysdm.cpl` → Enter
+2. Advanced tab → Environment Variables
+3. Edit `Path` under User variables → Add `%USERPROFILE%\go\bin`
+4. Restart your terminal
+
+---
+
 ## Code Quality Commands
 
 | Command | What it does |

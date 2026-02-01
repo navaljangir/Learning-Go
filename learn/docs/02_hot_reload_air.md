@@ -19,6 +19,45 @@ Hot reload automatically restarts your server when you save a file - no manual r
 go install github.com/air-verse/air@latest
 ```
 
+### Important: Add Go bin to PATH
+
+After installing, you need to add Go's bin folder to your system PATH (one time setup).
+
+**Where is it installed?**
+```bash
+# Check your GOPATH
+go env GOPATH
+
+# Air is at: <GOPATH>/bin/air
+# Example: C:\Users\jangi\go\bin\air.exe
+```
+
+**Windows (PowerShell - temporary for current session):**
+```powershell
+$env:Path += ";$(go env GOPATH)\bin"
+air  # Now works!
+```
+
+**Windows (Permanent - recommended):**
+1. Press `Win + R`, type `sysdm.cpl`, press Enter
+2. Go to **Advanced** tab → **Environment Variables**
+3. Under **User variables**, find `Path` and click **Edit**
+4. Click **New** and add: `%USERPROFILE%\go\bin`
+5. Click OK → OK → OK
+6. **Restart your terminal** (close and reopen VS Code)
+
+**macOS/Linux (Permanent):**
+```bash
+# Add to ~/.bashrc or ~/.zshrc
+echo 'export PATH=$PATH:$(go env GOPATH)/bin' >> ~/.zshrc
+source ~/.zshrc
+```
+
+**Verify it works:**
+```bash
+air --version
+```
+
 ## Using Air
 
 ```bash
@@ -72,6 +111,19 @@ clean_on_exit = true    # Delete tmp/ when air stops
 ```
 
 ## Common Configuration Changes
+
+### Run a specific file or folder
+```toml
+[build]
+# Run specific file (if you only have one main file)
+cmd = "go build -o ./tmp/main.exe app.go"
+
+# Run from a subfolder
+cmd = "go build -o ./tmp/main.exe ./cmd/api"
+
+# Default: compile entire current package
+cmd = "go build -o ./tmp/main.exe ."
+```
 
 ### Watch more file types
 ```toml
