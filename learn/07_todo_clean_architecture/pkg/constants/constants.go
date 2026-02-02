@@ -2,8 +2,9 @@ package constants
 
 // Context keys for storing values in request context
 const (
-	ContextUserID   = "user_id"
-	ContextUsername = "username"
+	ContextUserID    = "user_id"
+	ContextUsername  = "username"
+	ContextRequestID = "request_id"
 )
 
 // HTTP response messages

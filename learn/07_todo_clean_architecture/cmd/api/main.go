@@ -12,7 +12,7 @@ import (
 	"todo_app/api/router"
 	"todo_app/config"
 	"todo_app/internal/repository"
-	"todo_app/internal/repository/postgres"
+	"todo_app/internal/repository/sqlc_impl"
 	"todo_app/internal/service"
 	"todo_app/pkg/utils"
 
@@ -48,10 +48,10 @@ func main() {
 	defer db.Close()
 	log.Println("✓ Database connected successfully")
 
-	// Initialize repositories (Infrastructure layer)
-	userRepo := postgres.NewUserRepository(db.DB)
-	todoRepo := postgres.NewTodoRepository(db.DB)
-	log.Println("✓ Repositories initialized")
+	// Initialize repositories (Infrastructure layer) - using sqlc
+	userRepo := sqlc_impl.NewUserRepository(db.DB)
+	todoRepo := sqlc_impl.NewTodoRepository(db.DB)
+	log.Println("✓ Repositories initialized (using sqlc)")
 
 	// Initialize utilities
 	jwtUtil := utils.NewJWTUtil(cfg.JWT.Secret, cfg.JWT.ExpiryHours, cfg.JWT.Issuer)
@@ -120,8 +120,8 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	sig := <-quit
 
-	log.Printf("\n\n🛑 Received signal: %v", sig)
-	log.Println("🔄 Shutting down server gracefully...")
+	log.Printf("\n\n Received signal: %v", sig)
+	log.Println("Shutting down server gracefully...")
 
 	// Give outstanding requests 10 seconds to complete
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

@@ -18,6 +18,8 @@ A production-ready TODO application built with Go, following clean architecture 
 - **Language:** Go 1.21
 - **Framework:** Gin Web Framework
 - **Database:** PostgreSQL
+- **Query Builder:** sqlc (type-safe SQL)
+- **Driver:** lib/pq (database/sql)
 - **Authentication:** JWT (JSON Web Tokens)
 - **Password Hashing:** bcrypt
 
@@ -49,6 +51,7 @@ This project follows **Clean Architecture** principles with clear separation of 
 - Go 1.21 or higher
 - PostgreSQL 12 or higher
 - golang-migrate CLI (for migrations)
+- sqlc (for generating type-safe SQL code)
 
 ### Installation
 
@@ -57,18 +60,24 @@ This project follows **Clean Architecture** principles with clear separation of 
    cd learn/07_todo_clean_architecture
    ```
 
-2. **Install dependencies**
+2. **Install development tools**
+   ```bash
+   make install-tools
+   # This installs: air, golangci-lint, migrate, and sqlc
+   ```
+
+3. **Install dependencies**
    ```bash
    go mod download
    ```
 
-3. **Setup environment variables**
+4. **Setup environment variables**
    ```bash
    cp .env.example .env
    # Edit .env with your database credentials
    ```
 
-4. **Create database**
+5. **Create database**
    ```bash
    make setup
    ```
@@ -158,12 +167,15 @@ curl -X GET "http://localhost:8080/api/v1/todos?page=1&page_size=10" \
 - `make run` - Run the application
 - `make test` - Run tests
 - `make test-coverage` - Run tests with coverage
+- `make sqlc-generate` - Generate type-safe SQL code
+- `make sqlc-verify` - Verify SQL queries
 - `make migrate-up` - Run database migrations
 - `make migrate-down` - Rollback migrations
 - `make migrate-create name=xxx` - Create a new migration
 - `make setup` - Setup database
 - `make clean` - Clean build artifacts
 - `make deps` - Download dependencies
+- `make install-tools` - Install all dev tools (sqlc, migrate, etc.)
 
 ## Project Structure
 
@@ -183,8 +195,10 @@ curl -X GET "http://localhost:8080/api/v1/todos?page=1&page_size=10" \
 │   └── repository/        # Repository interfaces
 ├── internal/
 │   ├── dto/               # Data Transfer Objects
-│   ├── repository/        # Repository implementations
-│   │   └── postgres/      # PostgreSQL implementations
+│   ├── repository/        # Repository layer
+│   │   ├── queries/       # SQL queries for sqlc
+│   │   ├── sqlc/          # Generated Go code (DO NOT EDIT)
+│   │   └── sqlc_impl/     # Repository implementations using sqlc
 │   └── service/           # Business logic services
 ├── migrations/            # Database migrations
 ├── pkg/
@@ -193,11 +207,16 @@ curl -X GET "http://localhost:8080/api/v1/todos?page=1&page_size=10" \
 ├── scripts/
 │   ├── migrate.sh         # Migration script
 │   └── setup.sh           # Setup script
+├── docs/                  # Documentation
+│   ├── SQLC_MIGRATION.md        # sqlc migration guide
+│   └── SQLC_QUICK_REFERENCE.md  # sqlc quick reference
 ├── .env.example           # Environment variables template
 ├── .gitignore
 ├── go.mod
 ├── go.sum
+├── sqlc.yaml              # sqlc configuration
 ├── Makefile
+├── MIGRATION_SUMMARY.md   # Database layer migration summary
 └── README.md
 ```
 

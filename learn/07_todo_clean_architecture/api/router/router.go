@@ -21,6 +21,7 @@ func SetupRouter(
 	// Global middleware
 	r.Use(gin.Recovery())
 	r.Use(middleware.ErrorRecoveryMiddleware())
+	r.Use(middleware.RequestIDMiddleware())
 	r.Use(middleware.LoggerMiddleware())
 	r.Use(middleware.CORSMiddleware())
 

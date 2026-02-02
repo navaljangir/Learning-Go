@@ -1,4 +1,4 @@
-.PHONY: help build run test test-coverage migrate-up migrate-down migrate-create migrate-version setup clean deps lint fmt
+.PHONY: help build run test test-coverage migrate-up migrate-down migrate-create migrate-version setup clean deps lint fmt sqlc-generate sqlc-verify
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -103,11 +103,22 @@ vet: ## Run go vet
 	@go vet ./...
 	@echo "✓ No issues found!"
 
+sqlc-generate: ## Generate sqlc code from SQL queries
+	@echo "Generating sqlc code..."
+	@sqlc generate
+	@echo "✓ sqlc code generated!"
+
+sqlc-verify: ## Verify sqlc queries without generating code
+	@echo "Verifying sqlc queries..."
+	@sqlc verify
+	@echo "✓ sqlc queries verified!"
+
 install-tools: ## Install development tools
 	@echo "Installing development tools..."
 	@go install github.com/air-verse/air@latest
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	@go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+	@go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 	@echo "✓ Tools installed!"
 
 docker-up: ## Start services with docker-compose
