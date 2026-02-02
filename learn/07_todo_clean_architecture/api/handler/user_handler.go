@@ -1,0 +1,69 @@
+package handler
+
+import (
+	"todo_app/internal/dto"
+	"todo_app/internal/service"
+	"todo_app/pkg/constants"
+	"todo_app/pkg/utils"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+)
+
+// UserHandler handles user-related HTTP requests
+type UserHandler struct {
+	userService *service.UserService
+}
+
+// NewUserHandler creates a new user handler
+func NewUserHandler(userService *service.UserService) *UserHandler {
+	return &UserHandler{userService: userService}
+}
+
+// GetProfile handles getting the current user's profile
+// @Summary Get user profile
+// @Tags users
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} dto.UserResponse
+// @Failure 401 {object} utils.Response
+// @Router /api/v1/users/profile [get]
+func (h *UserHandler) GetProfile(c *gin.Context) {
+	userID := c.MustGet(constants.ContextUserID).(uuid.UUID)
+
+	response, err := h.userService.GetProfile(c.Request.Context(), userID)
+	if err != nil {
+		utils.NotFound(c, err.Error())
+		return
+	}
+
+	utils.Success(c, response)
+}
+
+// UpdateProfile handles updating the current user's profile
+// @Summary Update user profile
+// @Tags users
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.UpdateUserRequest true "Profile update details"
+// @Success 200 {object} dto.UserResponse
+// @Failure 400 {object} utils.Response
+// @Router /api/v1/users/profile [put]
+func (h *UserHandler) UpdateProfile(c *gin.Context) {
+	userID := c.MustGet(constants.ContextUserID).(uuid.UUID)
+
+	var req dto.UpdateUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.BadRequest(c, err.Error())
+		return
+	}
+
+	response, err := h.userService.UpdateProfile(c.Request.Context(), userID, req)
+	if err != nil {
+		utils.InternalError(c, err.Error())
+		return
+	}
+
+	utils.Success(c, response)
+}

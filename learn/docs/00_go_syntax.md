@@ -273,35 +273,43 @@ s := fmt.Sprintf("Hello %s", "World")  // returns string
 ### Format Verbs
 
 ```go
-// General
-%v      // default format
-%+v     // with field names (structs)
-%#v     // Go syntax representation
-%T      // type of value
-%%      // literal percent sign
+// General (works with ANY type)
+%v      // default format (most common!)
+%+v     // with field names (structs: {Name:Alice Age:30})
+%#v     // Go syntax representation (main.User{Name:"Alice", Age:30})
+%T      // type of value (string, int, []int, etc.)
+%%      // literal percent sign (prints %)
 
 // Strings
 %s      // string
-%q      // quoted string "hello"
-%x      // hex encoding
+%q      // quoted string "hello" (adds quotes)
+%x      // hex encoding (each byte as 2 hex digits)
+%X      // hex encoding (uppercase)
 
-// Numbers
-%d      // decimal integer
-%b      // binary
-%o      // octal
-%x, %X  // hexadecimal (lowercase/uppercase)
-%f      // float (default precision)
-%.2f    // float with 2 decimal places
-%e      // scientific notation
-%9d     // width 9, right-aligned
-%-9d    // width 9, left-aligned
-%09d    // width 9, zero-padded
+// Integers
+%d      // decimal (base 10): 42
+%b      // binary (base 2): 101010
+%o      // octal (base 8): 52
+%x, %X  // hexadecimal (base 16): 2a or 2A
+
+// Floats
+%f      // decimal float: 123.456000
+%.2f    // 2 decimal places: 123.46
+%e      // scientific notation: 1.234560e+02
+%E      // scientific (uppercase E): 1.234560E+02
+%g      // compact (%e or %f, whichever is shorter)
+
+// Width & Alignment
+%9d     // width 9, right-aligned:    "      42"
+%-9d    // width 9, left-aligned:     "42      "
+%09d    // width 9, zero-padded:      "000000042"
+%5.2f   // width 5, 2 decimals:       " 3.14"
 
 // Boolean
 %t      // true or false
 
 // Pointer
-%p      // pointer address
+%p      // pointer address: 0xc0000140a0
 ```
 
 ### Examples
@@ -310,7 +318,16 @@ s := fmt.Sprintf("Hello %s", "World")  // returns string
 name := "Go"
 version := 1.21
 count := 42
+isActive := true
 
+// Basic types with %v (default format - works with ANYTHING!)
+fmt.Printf("%v\n", name)             // Go
+fmt.Printf("%v\n", count)            // 42
+fmt.Printf("%v\n", version)          // 1.21
+fmt.Printf("%v\n", isActive)         // true
+fmt.Printf("%v\n", []int{1, 2, 3})   // [1 2 3]
+
+// Specific formatting
 fmt.Printf("Language: %s\n", name)           // Language: Go
 fmt.Printf("Version: %.2f\n", version)       // Version: 1.21
 fmt.Printf("Count: %d\n", count)             // Count: 42
@@ -318,6 +335,7 @@ fmt.Printf("Binary: %b\n", count)            // Binary: 101010
 fmt.Printf("Hex: %x\n", count)               // Hex: 2a
 fmt.Printf("Padded: %05d\n", count)          // Padded: 00042
 fmt.Printf("Type: %T\n", count)              // Type: int
+fmt.Printf("Bool: %t\n", isActive)           // Bool: true
 
 // Struct printing
 type User struct {
@@ -328,6 +346,17 @@ u := User{"Alice", 30}
 fmt.Printf("%v\n", u)    // {Alice 30}
 fmt.Printf("%+v\n", u)   // {Name:Alice Age:30}
 fmt.Printf("%#v\n", u)   // main.User{Name:"Alice", Age:30}
+
+// Time example
+t := time.Now()
+fmt.Printf("%v\n", t)    // 2026-02-01 14:23:45.123 +0530 IST
+fmt.Printf("%T\n", t)    // time.Time
+
+// Channel example
+ch := make(chan int)
+fmt.Printf("%v\n", ch)   // 0xc0000140a0 (channel address)
+fmt.Printf("%T\n", ch)   // chan int
+fmt.Printf("%p\n", ch)   // 0xc0000140a0 (same as %v for channels)
 ```
 
 ---
@@ -352,33 +381,62 @@ unixNano := time.Now().UnixNano()    // Unix timestamp (nanoseconds)
 
 ### Time Formatting
 
-Go uses a **reference time** for formatting: `Mon Jan 2 15:04:05 MST 2006`
+Go uses a **magic reference time** for formatting (NOT random!):
+
+```
+Mon Jan 2 15:04:05 MST 2006
+
+Think: 01/02 03:04:05 PM 2006
+       │  │  │  │  │     └─ Year
+       │  │  │  │  └─────── Second
+       │  │  │  └────────── Minute
+       │  │  └───────────── Hour (03 PM = 15 in 24h)
+       │  └──────────────── Day
+       └─────────────────── Month
+
+Mnemonic: 1-2-3-4-5-6 (sequential!)
+```
+
+**How it works:** Use the reference time as a template to show Go what format you want.
 
 ```go
-now := time.Now()
+now := time.Now()  // e.g., 2026-02-01 14:23:45.123
 
 // Common formats
-now.Format("2006-01-02")                    // 2024-01-15
-now.Format("2006-01-02 15:04:05")           // 2024-01-15 14:30:45
-now.Format("15:04:05")                      // 14:30:45
-now.Format("15:04:05.000")                  // 14:30:45.123 (with milliseconds)
-now.Format("15:04:05.000000")               // 14:30:45.123456 (with microseconds)
-now.Format("Mon, 02 Jan 2006")              // Mon, 15 Jan 2024
-now.Format("January 2, 2006")               // January 15, 2024
-now.Format(time.RFC3339)                    // 2024-01-15T14:30:45Z
-now.Format(time.Kitchen)                    // 2:30PM
+now.Format("2006-01-02")                    // 2026-02-01
+now.Format("2006-01-02 15:04:05")           // 2026-02-01 14:23:45
+now.Format("15:04:05")                      // 14:23:45
+now.Format("15:04:05.000")                  // 14:23:45.123 (milliseconds!)
+now.Format("15:04:05.000000")               // 14:23:45.123456 (microseconds)
+now.Format("Mon, 02 Jan 2006")              // Sat, 01 Feb 2026
+now.Format("January 2, 2006")               // February 1, 2026
+now.Format("3:04 PM")                       // 2:23 PM (12-hour)
+now.Format(time.RFC3339)                    // 2026-02-01T14:23:45+05:30
+now.Format(time.Kitchen)                    // 2:23PM
 
 // Reference time breakdown:
-// Mon    = day of week
-// Jan    = month (short)
-// 2      = day
-// 15     = hour (24h)
+// 2006   = year (4-digit)
+// 06     = year (2-digit)
+// 01     = month (numeric)
+// Jan    = month (short name)
+// January = month (full name)
+// 02     = day
+// Mon    = day of week (short)
+// Monday = day of week (full)
+// 15     = hour (24-hour format)
+// 03     = hour (12-hour format)
 // 04     = minute
 // 05     = second
-// 2006   = year
-// MST    = timezone
+// .000   = milliseconds
+// .000000 = microseconds
+// PM     = AM/PM
+// MST    = timezone name
 // -0700  = timezone offset
 ```
+
+**Why this specific time?**
+- January 2, 2006, at 3:04:05 PM MST = `01/02 03:04:05PM '06`
+- Easy to remember: 1, 2, 3, 4, 5, 6
 
 ### Logging with Timestamps
 
@@ -948,30 +1006,184 @@ p := &Person{Name: "Charlie", Age: 35}
 p.Name = "Charles"  // automatic dereference (same as (*p).Name)
 ```
 
-### Methods
+### Methods (Instance Methods)
+
+**Methods are functions attached to a type** (like instance methods in JavaScript classes).
+
+#### Syntax Breakdown
 
 ```go
+func (r *Rectangle) Scale(factor float64)
+     │  │          │      │
+     │  │          │      └── Parameters
+     │  │          └───────── Method name
+     │  └──────────────────── Type (what type this method belongs to)
+     └─────────────────────── Receiver (like "this" in JavaScript)
+
+// Reading: "This is a method called Scale on the Rectangle type,
+//           and 'r' refers to the Rectangle instance"
+```
+
+#### JavaScript vs Go Comparison
+
+```javascript
+// JavaScript (ES6 Class)
+class Rectangle {
+    constructor(width, height) {
+        this.width = width;
+        this.height = height;
+    }
+
+    // Instance method
+    area() {
+        return this.width * this.height;  // "this" = instance
+    }
+
+    scale(factor) {
+        this.width *= factor;   // Modifies instance
+        this.height *= factor;
+    }
+}
+
+const rect = new Rectangle(10, 5);
+rect.area();    // 50 (this = rect)
+rect.scale(2);  // this = rect
+```
+
+```go
+// Go (Struct + Methods)
 type Rectangle struct {
     Width, Height float64
 }
 
-// Value receiver (doesn't modify original)
+// Value receiver (read-only, works on copy)
 func (r Rectangle) Area() float64 {
+    return r.Width * r.Height  // "r" = copy of instance
+}
+
+// Pointer receiver (can modify, works on original)
+func (r *Rectangle) Scale(factor float64) {
+    r.Width *= factor   // Modifies original
+    r.Height *= factor
+}
+
+// Usage (similar to JavaScript!)
+rect := Rectangle{10, 5}
+rect.Area()    // 50 (r = copy of rect)
+rect.Scale(2)  // r = pointer to rect
+```
+
+#### Value Receiver vs Pointer Receiver
+
+**1. Value Receiver `(r Rectangle)` - Read-Only**
+
+```go
+func (r Rectangle) Area() float64 {
+    // r is a COPY of the struct
+    // Changes to r don't affect the original
     return r.Width * r.Height
 }
 
-// Pointer receiver (can modify original)
+rect := Rectangle{10, 5}
+area := rect.Area()  // rect is COPIED, original unchanged
+```
+
+**When to use:**
+- Method only reads data (doesn't modify)
+- Struct is small (copying is cheap)
+- You want to prevent accidental modification
+
+**2. Pointer Receiver `(r *Rectangle)` - Can Modify**
+
+```go
 func (r *Rectangle) Scale(factor float64) {
+    // r is a POINTER to the struct
+    // Changes to r MODIFY the original
     r.Width *= factor
     r.Height *= factor
 }
 
-// Usage
 rect := Rectangle{10, 5}
-fmt.Println(rect.Area())  // 50
-rect.Scale(2)
-fmt.Println(rect.Area())  // 200
+rect.Scale(2)  // Modifies rect directly (Width=20, Height=10)
 ```
+
+**When to use:**
+- Method modifies the struct
+- Struct is large (avoid copying overhead)
+- **Most common choice** (always use pointer for consistency)
+
+#### Complete Example
+
+```go
+type Server struct {
+    name    string
+    port    int
+    running bool
+}
+
+// Constructor pattern (returns pointer)
+func NewServer(name string, port int) *Server {
+    return &Server{
+        name:    name,
+        port:    port,
+        running: false,
+    }
+}
+
+// Pointer receiver - modifies state
+func (s *Server) Start() {
+    s.running = true
+    fmt.Printf("Server '%s' started on port %d\n", s.name, s.port)
+}
+
+// Pointer receiver - modifies state
+func (s *Server) Stop() {
+    s.running = false
+    fmt.Printf("Server '%s' stopped\n", s.name)
+}
+
+// Value receiver - read-only
+func (s Server) IsRunning() bool {
+    return s.running
+}
+
+// Value receiver - read-only
+func (s Server) String() string {
+    status := "stopped"
+    if s.running {
+        status = "running"
+    }
+    return fmt.Sprintf("Server{name: %s, port: %d, %s}", s.name, s.port, status)
+}
+
+// Usage
+func main() {
+    server := NewServer("API Server", 8080)  // Like "new Server()"
+    server.Start()                           // Modifies server
+    fmt.Println(server.IsRunning())          // true
+    fmt.Println(server.String())             // Server{name: API Server, port: 8080, running}
+    server.Stop()                            // Modifies server
+}
+```
+
+**Output:**
+```
+Server 'API Server' started on port 8080
+true
+Server{name: API Server, port: 8080, running}
+Server 'API Server' stopped
+```
+
+#### Quick Reference
+
+| Syntax | JavaScript Equivalent | When to Use |
+|--------|----------------------|-------------|
+| `func (s Server) method()` | `method() { /* read only */ }` | Read-only access, small structs |
+| `func (s *Server) method()` | `method() { this.x = ... }` | Modify state, large structs (most common) |
+| `s.field` | `this.field` | Access instance fields |
+| `server.Start()` | `server.start()` | Call method on instance |
+
+**Best Practice:** Use pointer receivers `(s *Server)` for all methods unless you have a specific reason not to (consistency!).
 
 ### Embedding (Composition)
 
