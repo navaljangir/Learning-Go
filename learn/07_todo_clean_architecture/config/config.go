@@ -48,9 +48,9 @@ func Load() *Config {
 		},
 		Database: DatabaseConfig{
 			Host:     getEnv("DB_HOST", "localhost"),
-			Port:     getEnv("DB_PORT", "5432"),
-			User:     getEnv("DB_USER", "postgres"),
-			Password: getEnv("DB_PASSWORD", "postgres"),
+			Port:     getEnv("DB_PORT", "3306"),
+			User:     getEnv("DB_USER", "root"),
+			Password: getEnv("DB_PASSWORD", "rootpassword"),
 			DBName:   getEnv("DB_NAME", "todo_db"),
 		},
 		JWT: JWTConfig{
@@ -63,8 +63,7 @@ func Load() *Config {
 
 // getEnv reads an environment variable or returns a default value
 func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); 
-	value != "" {
+	if value := os.Getenv(key); value != "" {
 		return value
 	}
 	return defaultValue

@@ -4,13 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strings"
 	"time"
 	"todo_app/domain/entity"
 	"todo_app/domain/repository"
 	"todo_app/internal/repository/sqlc"
 
 	"github.com/google/uuid"
-	"github.com/lib/pq"
 )
 
 // Helper functions shared between repositories
@@ -36,15 +36,7 @@ func toNullString(s string) sql.NullString {
 	return sql.NullString{String: s, Valid: true}
 }
 
-// toNullTime converts time.Time to sql.NullTime
-func toNullTime(t time.Time) sql.NullTime {
-	if t.IsZero() {
-		return sql.NullTime{Valid: false}
-	}
-	return sql.NullTime{Time: t, Valid: true}
-}
-
-// toNullTimePtrconverts *time.Time to sql.NullTime
+// toNullTimePtr converts *time.Time to sql.NullTime
 func toNullTimePtr(t *time.Time) sql.NullTime {
 	if t == nil {
 		return sql.NullTime{Valid: false}
@@ -60,14 +52,6 @@ func fromNullString(ns sql.NullString) string {
 	return ns.String
 }
 
-// fromNullTime converts sql.NullTime to time.Time
-func fromNullTime(nt sql.NullTime) time.Time {
-	if !nt.Valid {
-		return time.Time{}
-	}
-	return nt.Time
-}
-
 // fromNullTimePtr converts sql.NullTime to *time.Time
 func fromNullTimePtr(nt sql.NullTime) *time.Time {
 	if !nt.Valid {
@@ -78,33 +62,35 @@ func fromNullTimePtr(nt sql.NullTime) *time.Time {
 
 // sqlcUserToEntity converts sqlc.User to entity.User
 func sqlcUserToEntity(u sqlc.User) *entity.User {
+	id, _ := uuid.Parse(u.ID)
+
 	return &entity.User{
-		ID:           u.ID,
+		ID:           id,
 		Username:     u.Username,
 		Email:        u.Email,
 		PasswordHash: u.PasswordHash,
 		FullName:     fromNullString(u.FullName),
-		CreatedAt:    fromNullTime(u.CreatedAt),
-		UpdatedAt:    fromNullTime(u.UpdatedAt),
+		CreatedAt:    u.CreatedAt,
+		UpdatedAt:    u.UpdatedAt,
 		DeletedAt:    fromNullTimePtr(u.DeletedAt),
 	}
 }
 
 func (r *userRepository) Create(ctx context.Context, user *entity.User) error {
 	params := sqlc.CreateUserParams{
-		ID:           user.ID,
+		ID:           user.ID.String(),
 		Username:     user.Username,
 		Email:        user.Email,
 		PasswordHash: user.PasswordHash,
 		FullName:     toNullString(user.FullName),
-		CreatedAt:    toNullTime(user.CreatedAt),
-		UpdatedAt:    toNullTime(user.UpdatedAt),
+		CreatedAt:    user.CreatedAt,
+		UpdatedAt:    user.UpdatedAt,
 	}
 
 	err := r.queries.CreateUser(ctx, params)
 	if err != nil {
-		// Check for unique constraint violations
-		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
+		// Check for MySQL unique constraint violations (Error 1062)
+		if strings.Contains(err.Error(), "Duplicate entry") || strings.Contains(err.Error(), "1062") {
 			return errors.New("username or email already exists")
 		}
 		return err
@@ -113,7 +99,7 @@ func (r *userRepository) Create(ctx context.Context, user *entity.User) error {
 }
 
 func (r *userRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.User, error) {
-	user, err := r.queries.GetUserByID(ctx, id)
+	user, err := r.queries.GetUserByID(ctx, id.String())
 	if err == sql.ErrNoRows {
 		return nil, errors.New("user not found")
 	}
@@ -147,15 +133,15 @@ func (r *userRepository) FindByEmail(ctx context.Context, email string) (*entity
 
 func (r *userRepository) Update(ctx context.Context, user *entity.User) error {
 	params := sqlc.UpdateUserParams{
-		ID:        user.ID,
+		ID:        user.ID.String(),
 		FullName:  toNullString(user.FullName),
-		UpdatedAt: toNullTime(user.UpdatedAt),
+		UpdatedAt: user.UpdatedAt,
 	}
 	return r.queries.UpdateUser(ctx, params)
 }
 
 func (r *userRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	return r.queries.SoftDeleteUser(ctx, id)
+	return r.queries.SoftDeleteUser(ctx, id.String())
 }
 
 func (r *userRepository) List(ctx context.Context, limit, offset int) ([]*entity.User, error) {

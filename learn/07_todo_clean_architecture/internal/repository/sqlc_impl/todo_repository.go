@@ -26,6 +26,9 @@ func NewTodoRepository(db *sql.DB) repository.TodoRepository {
 
 // sqlcTodoToEntity converts sqlc.Todo to entity.Todo
 func sqlcTodoToEntity(t sqlc.Todo) *entity.Todo {
+	id, _ := uuid.Parse(t.ID)
+	userID, _ := uuid.Parse(t.UserID)
+
 	description := ""
 	if t.Description.Valid {
 		description = t.Description.String
@@ -37,15 +40,15 @@ func sqlcTodoToEntity(t sqlc.Todo) *entity.Todo {
 	}
 
 	return &entity.Todo{
-		ID:          t.ID,
-		UserID:      t.UserID,
+		ID:          id,
+		UserID:      userID,
 		Title:       t.Title,
 		Description: description,
-		Completed:   t.Completed.Bool,
+		Completed:   t.Completed,
 		Priority:    priority,
 		DueDate:     fromNullTimePtr(t.DueDate),
-		CreatedAt:   fromNullTime(t.CreatedAt),
-		UpdatedAt:   fromNullTime(t.UpdatedAt),
+		CreatedAt:   t.CreatedAt,
+		UpdatedAt:   t.UpdatedAt,
 		CompletedAt: fromNullTimePtr(t.CompletedAt),
 		DeletedAt:   fromNullTimePtr(t.DeletedAt),
 	}
@@ -53,21 +56,21 @@ func sqlcTodoToEntity(t sqlc.Todo) *entity.Todo {
 
 func (r *todoRepository) Create(ctx context.Context, todo *entity.Todo) error {
 	params := sqlc.CreateTodoParams{
-		ID:          todo.ID,
-		UserID:      todo.UserID,
+		ID:          todo.ID.String(),
+		UserID:      todo.UserID.String(),
 		Title:       todo.Title,
 		Description: toNullString(todo.Description),
-		Completed:   sql.NullBool{Bool: todo.Completed, Valid: true},
+		Completed:   todo.Completed,
 		Priority:    toNullString(string(todo.Priority)),
 		DueDate:     toNullTimePtr(todo.DueDate),
-		CreatedAt:   toNullTime(todo.CreatedAt),
-		UpdatedAt:   toNullTime(todo.UpdatedAt),
+		CreatedAt:   todo.CreatedAt,
+		UpdatedAt:   todo.UpdatedAt,
 	}
 	return r.queries.CreateTodo(ctx, params)
 }
 
 func (r *todoRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.Todo, error) {
-	todo, err := r.queries.GetTodoByID(ctx, id)
+	todo, err := r.queries.GetTodoByID(ctx, id.String())
 	if err == sql.ErrNoRows {
 		return nil, errors.New("todo not found")
 	}
@@ -79,7 +82,7 @@ func (r *todoRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.To
 
 func (r *todoRepository) FindByUserID(ctx context.Context, userID uuid.UUID, limit, offset int) ([]*entity.Todo, error) {
 	params := sqlc.GetTodosByUserIDParams{
-		UserID: userID,
+		UserID: userID.String(),
 		Limit:  int32(limit),
 		Offset: int32(offset),
 	}
@@ -105,7 +108,7 @@ func (r *todoRepository) FindWithFilters(ctx context.Context, filter repository.
 
 	// Convert pointer types to nullable types
 	if filter.UserID != nil {
-		params.UserID = uuid.NullUUID{UUID: *filter.UserID, Valid: true}
+		params.UserID = sql.NullString{String: filter.UserID.String(), Valid: true}
 	}
 
 	if filter.Completed != nil {
@@ -117,11 +120,11 @@ func (r *todoRepository) FindWithFilters(ctx context.Context, filter repository.
 	}
 
 	if filter.FromDate != nil {
-		params.FromDate = sql.NullTime{Time: *filter.FromDate, Valid: true}
+		params.DueDateFrom = sql.NullTime{Time: *filter.FromDate, Valid: true}
 	}
 
 	if filter.ToDate != nil {
-		params.ToDate = sql.NullTime{Time: *filter.ToDate, Valid: true}
+		params.DueDateTo = sql.NullTime{Time: *filter.ToDate, Valid: true}
 	}
 
 	todos, err := r.queries.GetTodosFiltered(ctx, params)
@@ -139,20 +142,20 @@ func (r *todoRepository) FindWithFilters(ctx context.Context, filter repository.
 
 func (r *todoRepository) Update(ctx context.Context, todo *entity.Todo) error {
 	params := sqlc.UpdateTodoParams{
-		ID:          todo.ID,
+		ID:          todo.ID.String(),
 		Title:       todo.Title,
 		Description: toNullString(todo.Description),
-		Completed:   sql.NullBool{Bool: todo.Completed, Valid: true},
+		Completed:   todo.Completed,
 		Priority:    toNullString(string(todo.Priority)),
 		DueDate:     toNullTimePtr(todo.DueDate),
-		UpdatedAt:   toNullTime(todo.UpdatedAt),
+		UpdatedAt:   todo.UpdatedAt,
 		CompletedAt: toNullTimePtr(todo.CompletedAt),
 	}
 	return r.queries.UpdateTodo(ctx, params)
 }
 
 func (r *todoRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	return r.queries.SoftDeleteTodo(ctx, id)
+	return r.queries.SoftDeleteTodo(ctx, id.String())
 }
 
 func (r *todoRepository) Count(ctx context.Context, filter repository.TodoFilter) (int64, error) {
@@ -160,7 +163,7 @@ func (r *todoRepository) Count(ctx context.Context, filter repository.TodoFilter
 
 	// Convert pointer types to nullable types
 	if filter.UserID != nil {
-		params.UserID = uuid.NullUUID{UUID: *filter.UserID, Valid: true}
+		params.UserID = sql.NullString{String: filter.UserID.String(), Valid: true}
 	}
 
 	if filter.Completed != nil {
@@ -172,16 +175,16 @@ func (r *todoRepository) Count(ctx context.Context, filter repository.TodoFilter
 	}
 
 	if filter.FromDate != nil {
-		params.FromDate = sql.NullTime{Time: *filter.FromDate, Valid: true}
+		params.DueDateFrom = sql.NullTime{Time: *filter.FromDate, Valid: true}
 	}
 
 	if filter.ToDate != nil {
-		params.ToDate = sql.NullTime{Time: *filter.ToDate, Valid: true}
+		params.DueDateTo = sql.NullTime{Time: *filter.ToDate, Valid: true}
 	}
 
 	return r.queries.CountTodosFiltered(ctx, params)
 }
 
 func (r *todoRepository) CountByUser(ctx context.Context, userID uuid.UUID) (int64, error) {
-	return r.queries.CountTodosByUser(ctx, userID)
+	return r.queries.CountTodosByUser(ctx, userID.String())
 }

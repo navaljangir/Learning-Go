@@ -8,45 +8,44 @@ package sqlc
 import (
 	"context"
 	"database/sql"
-
-	"github.com/google/uuid"
+	"time"
 )
 
 const checkEmailExists = `-- name: CheckEmailExists :one
-SELECT EXISTS(SELECT 1 FROM users WHERE email = $1 AND deleted_at IS NULL) AS exists
+SELECT EXISTS(SELECT 1 FROM users WHERE email = ? AND deleted_at IS NULL) AS email_exists
 `
 
 func (q *Queries) CheckEmailExists(ctx context.Context, email string) (bool, error) {
 	row := q.db.QueryRowContext(ctx, checkEmailExists, email)
-	var exists bool
-	err := row.Scan(&exists)
-	return exists, err
+	var email_exists bool
+	err := row.Scan(&email_exists)
+	return email_exists, err
 }
 
 const checkUsernameExists = `-- name: CheckUsernameExists :one
-SELECT EXISTS(SELECT 1 FROM users WHERE username = $1 AND deleted_at IS NULL) AS exists
+SELECT EXISTS(SELECT 1 FROM users WHERE username = ? AND deleted_at IS NULL) AS username_exists
 `
 
 func (q *Queries) CheckUsernameExists(ctx context.Context, username string) (bool, error) {
 	row := q.db.QueryRowContext(ctx, checkUsernameExists, username)
-	var exists bool
-	err := row.Scan(&exists)
-	return exists, err
+	var username_exists bool
+	err := row.Scan(&username_exists)
+	return username_exists, err
 }
 
 const createUser = `-- name: CreateUser :exec
 INSERT INTO users (id, username, email, password_hash, full_name, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+VALUES (?, ?, ?, ?, ?, ?, ?)
 `
 
 type CreateUserParams struct {
-	ID           uuid.UUID      `json:"id"`
+	ID           string         `json:"id"`
 	Username     string         `json:"username"`
 	Email        string         `json:"email"`
 	PasswordHash string         `json:"password_hash"`
 	FullName     sql.NullString `json:"full_name"`
-	CreatedAt    sql.NullTime   `json:"created_at"`
-	UpdatedAt    sql.NullTime   `json:"updated_at"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
@@ -65,7 +64,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT id, username, email, password_hash, full_name, created_at, updated_at, deleted_at
 FROM users
-WHERE email = $1 AND deleted_at IS NULL
+WHERE email = ? AND deleted_at IS NULL
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
@@ -87,10 +86,10 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 const getUserByID = `-- name: GetUserByID :one
 SELECT id, username, email, password_hash, full_name, created_at, updated_at, deleted_at
 FROM users
-WHERE id = $1 AND deleted_at IS NULL
+WHERE id = ? AND deleted_at IS NULL
 `
 
-func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
+func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUserByID, id)
 	var i User
 	err := row.Scan(
@@ -109,7 +108,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 const getUserByUsername = `-- name: GetUserByUsername :one
 SELECT id, username, email, password_hash, full_name, created_at, updated_at, deleted_at
 FROM users
-WHERE username = $1 AND deleted_at IS NULL
+WHERE username = ? AND deleted_at IS NULL
 `
 
 func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
@@ -133,7 +132,7 @@ SELECT id, username, email, password_hash, full_name, created_at, updated_at, de
 FROM users
 WHERE deleted_at IS NULL
 ORDER BY created_at DESC
-LIMIT $1 OFFSET $2
+LIMIT ? OFFSET ?
 `
 
 type ListUsersParams struct {
@@ -175,28 +174,28 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 
 const softDeleteUser = `-- name: SoftDeleteUser :exec
 UPDATE users
-SET deleted_at = NOW()
-WHERE id = $1 AND deleted_at IS NULL
+SET deleted_at = CURRENT_TIMESTAMP
+WHERE id = ? AND deleted_at IS NULL
 `
 
-func (q *Queries) SoftDeleteUser(ctx context.Context, id uuid.UUID) error {
+func (q *Queries) SoftDeleteUser(ctx context.Context, id string) error {
 	_, err := q.db.ExecContext(ctx, softDeleteUser, id)
 	return err
 }
 
 const updateUser = `-- name: UpdateUser :exec
 UPDATE users
-SET full_name = $2, updated_at = $3
-WHERE id = $1 AND deleted_at IS NULL
+SET full_name = ?, updated_at = ?
+WHERE id = ? AND deleted_at IS NULL
 `
 
 type UpdateUserParams struct {
-	ID        uuid.UUID      `json:"id"`
 	FullName  sql.NullString `json:"full_name"`
-	UpdatedAt sql.NullTime   `json:"updated_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	ID        string         `json:"id"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
-	_, err := q.db.ExecContext(ctx, updateUser, arg.ID, arg.FullName, arg.UpdatedAt)
+	_, err := q.db.ExecContext(ctx, updateUser, arg.FullName, arg.UpdatedAt, arg.ID)
 	return err
 }

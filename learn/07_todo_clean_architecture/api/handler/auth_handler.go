@@ -1,8 +1,8 @@
 package handler
 
 import (
+	"todo_app/domain/service"
 	"todo_app/internal/dto"
-	"todo_app/internal/service"
 	"todo_app/pkg/utils"
 
 	"github.com/gin-gonic/gin"
@@ -10,11 +10,13 @@ import (
 
 // AuthHandler handles authentication-related HTTP requests
 type AuthHandler struct {
-	userService *service.UserService
+	userService service.UserService
 }
 
 // NewAuthHandler creates a new auth handler
-func NewAuthHandler(userService *service.UserService) *AuthHandler {
+// Returns AuthHandlerInterface to enforce dependency on abstraction
+func NewAuthHandler(userService service.UserService) AuthHandlerInterface {
+
 	return &AuthHandler{userService: userService}
 }
 

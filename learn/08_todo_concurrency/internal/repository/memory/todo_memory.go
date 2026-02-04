@@ -19,9 +19,9 @@ import (
 // Without mutex: Two goroutines could read/write simultaneously, causing data corruption
 // With mutex: Only one goroutine can access the map at a time
 type InMemoryTodoRepository struct {
-	mu    sync.RWMutex         // RWMutex allows multiple readers OR one writer
-	todos map[string]*entity.Todo // The actual storage
-	nextID int                  // Auto-incrementing ID
+	mu     sync.RWMutex            // RWMutex allows multiple readers OR one writer
+	todos  map[string]*entity.Todo // The actual storage
+	nextID int                     // Auto-incrementing ID
 
 	// Statistics (protected by the same mutex)
 	accessCount int
@@ -39,8 +39,8 @@ func NewInMemoryTodoRepository() repository.TodoRepository {
 // Create adds a new todo
 // MUTEX LEARNING: We use Lock() for write operations
 func (r *InMemoryTodoRepository) Create(ctx context.Context, todo *entity.Todo) error {
-	r.mu.Lock()                // LOCK - No other goroutine can access now
-	defer r.mu.Unlock()        // UNLOCK - Always unlock when function returns
+	r.mu.Lock()         // LOCK - No other goroutine can access now
+	defer r.mu.Unlock() // UNLOCK - Always unlock when function returns
 
 	// Generate ID
 	todo.ID = fmt.Sprintf("%d", r.nextID)
@@ -65,8 +65,8 @@ func (r *InMemoryTodoRepository) Create(ctx context.Context, todo *entity.Todo) 
 // MUTEX LEARNING: We use RLock() for read operations
 // RLock allows multiple readers simultaneously (better performance)
 func (r *InMemoryTodoRepository) FindByID(ctx context.Context, id string) (*entity.Todo, error) {
-	r.mu.RLock()               // READ LOCK - Multiple goroutines can hold this
-	defer r.mu.RUnlock()       // UNLOCK
+	r.mu.RLock()         // READ LOCK - Multiple goroutines can hold this
+	defer r.mu.RUnlock() // UNLOCK
 
 	r.accessCount++
 	r.lastAccess = time.Now()
@@ -168,10 +168,10 @@ func (r *InMemoryTodoRepository) GetStats() map[string]interface{} {
 	defer r.mu.RUnlock()
 
 	return map[string]interface{}{
-		"storage_type":  "in-memory",
-		"total_todos":   len(r.todos),
-		"access_count":  r.accessCount,
-		"last_access":   r.lastAccess.Format(time.RFC3339),
+		"storage_type": "in-memory",
+		"total_todos":  len(r.todos),
+		"access_count": r.accessCount,
+		"last_access":  r.lastAccess.Format(time.RFC3339),
 	}
 }
 

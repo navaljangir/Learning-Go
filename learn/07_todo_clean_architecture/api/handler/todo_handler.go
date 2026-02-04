@@ -2,8 +2,8 @@ package handler
 
 import (
 	"strconv"
+	"todo_app/domain/service"
 	"todo_app/internal/dto"
-	"todo_app/internal/service"
 	"todo_app/pkg/constants"
 	"todo_app/pkg/utils"
 
@@ -13,11 +13,12 @@ import (
 
 // TodoHandler handles todo-related HTTP requests
 type TodoHandler struct {
-	todoService *service.TodoService
+	todoService service.TodoService
 }
 
 // NewTodoHandler creates a new todo handler
-func NewTodoHandler(todoService *service.TodoService) *TodoHandler {
+// Returns TodoHandlerInterface to enforce dependency on abstraction
+func NewTodoHandler(todoService service.TodoService) TodoHandlerInterface {
 	return &TodoHandler{todoService: todoService}
 }
 

@@ -10,10 +10,11 @@ import (
 )
 
 // SetupRouter configures all routes for the application
+// Uses interfaces for handlers to support dependency injection and testing
 func SetupRouter(
-	authHandler *handler.AuthHandler,
-	userHandler *handler.UserHandler,
-	todoHandler *handler.TodoHandler,
+	authHandler handler.AuthHandlerInterface,
+	userHandler handler.UserHandlerInterface,
+	todoHandler handler.TodoHandlerInterface,
 	jwtUtil *utils.JWTUtil,
 ) *gin.Engine {
 	r := gin.New()

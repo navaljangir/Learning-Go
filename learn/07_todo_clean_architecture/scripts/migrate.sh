@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Database migration script for TODO application
+# Database migration script for TODO application (MySQL)
 set -e
 
 # Load environment variables
@@ -12,15 +12,22 @@ else
     exit 1
 fi
 
-# Build database URL
-DB_URL="postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable"
+# Set defaults if not set
+DB_HOST=${DB_HOST:-"localhost"}
+DB_PORT=${DB_PORT:-"3306"}
+DB_USER=${DB_USER:-"root"}
+DB_PASSWORD=${DB_PASSWORD:-"rootpassword"}
+DB_NAME=${DB_NAME:-"todo_db"}
+
+# Build database URL for MySQL
+DB_URL="mysql://${DB_USER}:${DB_PASSWORD}@tcp(${DB_HOST}:${DB_PORT})/${DB_NAME}"
 
 # Check if migrate command is available
 if ! command -v migrate &> /dev/null; then
     echo "Error: 'migrate' command not found."
     echo ""
     echo "Please install golang-migrate:"
-    echo "  go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest"
+    echo "  go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest"
     echo ""
     exit 1
 fi

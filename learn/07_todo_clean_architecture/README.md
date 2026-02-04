@@ -15,11 +15,11 @@ A production-ready TODO application built with Go, following clean architecture 
 
 ## Tech Stack
 
-- **Language:** Go 1.21
+- **Language:** Go 1.21+
 - **Framework:** Gin Web Framework
-- **Database:** PostgreSQL
+- **Database:** MySQL 8.0 (runs in Docker)
 - **Query Builder:** sqlc (type-safe SQL)
-- **Driver:** lib/pq (database/sql)
+- **Driver:** go-sql-driver/mysql (database/sql)
 - **Authentication:** JWT (JSON Web Tokens)
 - **Password Hashing:** bcrypt
 
@@ -49,50 +49,51 @@ This project follows **Clean Architecture** principles with clear separation of 
 ### Prerequisites
 
 - Go 1.21 or higher
-- PostgreSQL 12 or higher
+- Docker (for running MySQL)
 - golang-migrate CLI (for migrations)
 - sqlc (for generating type-safe SQL code)
 
 ### Installation
 
-1. **Clone the repository**
+1. **Start MySQL container (ONE COMMAND):**
+   ```bash
+   docker run -d --name todo_mysql -e MYSQL_ROOT_PASSWORD=rootpassword -e MYSQL_DATABASE=todo_db -p 3306:3306 mysql:8.0
+   ```
+
+2. **Wait for MySQL to start (10-15 seconds):**
+   ```bash
+   sleep 15
+   ```
+
+3. **Clone/navigate to the directory:**
    ```bash
    cd learn/07_todo_clean_architecture
    ```
 
-2. **Install development tools**
+4. **Setup environment variables:**
    ```bash
-   make install-tools
-   # This installs: air, golangci-lint, migrate, and sqlc
+   cp .env.example .env
+   # Already configured for Docker MySQL at localhost:3306
    ```
 
-3. **Install dependencies**
+5. **Install dependencies:**
    ```bash
    go mod download
    ```
 
-4. **Setup environment variables**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your database credentials
-   ```
-
-5. **Create database**
-   ```bash
-   make setup
-   ```
-
-5. **Run migrations**
+6. **Run migrations:**
    ```bash
    make migrate-up
    ```
 
-6. **Run the application**
+7. **Run the application:**
    ```bash
    make run
    ```
 
 The server will start on `http://localhost:8080`
+
+> See `QUICKSTART.md` for quick copy-paste commands!
 
 ## API Endpoints
 
@@ -172,7 +173,7 @@ curl -X GET "http://localhost:8080/api/v1/todos?page=1&page_size=10" \
 - `make migrate-up` - Run database migrations
 - `make migrate-down` - Rollback migrations
 - `make migrate-create name=xxx` - Create a new migration
-- `make setup` - Setup database
+- `make setup` - Setup database directory
 - `make clean` - Clean build artifacts
 - `make deps` - Download dependencies
 - `make install-tools` - Install all dev tools (sqlc, migrate, etc.)
@@ -228,6 +229,39 @@ curl -X GET "http://localhost:8080/api/v1/todos?page=1&page_size=10" \
 - **Input Validation** - Gin binding validators
 - **Authorization** - User-specific resource access control
 - **Soft Deletes** - Data recovery capability
+
+## Why MySQL in Docker?
+
+- **No Local Installation** - Don't need MySQL installed on your machine
+- **Isolated** - Separate from any existing databases
+- **Easy to Reset** - Just delete and recreate the container
+- **Production-like** - Similar to real deployment scenarios
+- **Simple Command** - One command to start everything
+
+```bash
+docker run -d --name todo_mysql -e MYSQL_ROOT_PASSWORD=rootpassword -e MYSQL_DATABASE=todo_db -p 3306:3306 mysql:8.0
+```
+
+## Docker Commands
+
+```bash
+# Start MySQL
+docker start todo_mysql
+
+# Stop MySQL
+docker stop todo_mysql
+
+# View logs
+docker logs todo_mysql
+
+# Connect to MySQL shell
+docker exec -it todo_mysql mysql -uroot -prootpassword todo_db
+
+# Remove container (deletes data)
+docker rm -f todo_mysql
+```
+
+See `MYSQL_DOCKER_SETUP.md` for detailed documentation.
 
 ## Contributing
 

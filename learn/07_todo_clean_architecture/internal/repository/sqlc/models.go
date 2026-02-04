@@ -6,31 +6,30 @@ package sqlc
 
 import (
 	"database/sql"
-
-	"github.com/google/uuid"
+	"time"
 )
 
 type Todo struct {
-	ID          uuid.UUID      `json:"id"`
-	UserID      uuid.UUID      `json:"user_id"`
+	ID          string         `json:"id"`
+	UserID      string         `json:"user_id"`
 	Title       string         `json:"title"`
 	Description sql.NullString `json:"description"`
-	Completed   sql.NullBool   `json:"completed"`
+	Completed   bool           `json:"completed"`
 	Priority    sql.NullString `json:"priority"`
 	DueDate     sql.NullTime   `json:"due_date"`
-	CreatedAt   sql.NullTime   `json:"created_at"`
-	UpdatedAt   sql.NullTime   `json:"updated_at"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
 	CompletedAt sql.NullTime   `json:"completed_at"`
 	DeletedAt   sql.NullTime   `json:"deleted_at"`
 }
 
 type User struct {
-	ID           uuid.UUID      `json:"id"`
+	ID           string         `json:"id"`
 	Username     string         `json:"username"`
 	Email        string         `json:"email"`
 	PasswordHash string         `json:"password_hash"`
 	FullName     sql.NullString `json:"full_name"`
-	CreatedAt    sql.NullTime   `json:"created_at"`
-	UpdatedAt    sql.NullTime   `json:"updated_at"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
 	DeletedAt    sql.NullTime   `json:"deleted_at"`
 }

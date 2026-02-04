@@ -8,8 +8,7 @@ package sqlc
 import (
 	"context"
 	"database/sql"
-
-	"github.com/google/uuid"
+	"time"
 )
 
 const countTodos = `-- name: CountTodos :one
@@ -28,10 +27,10 @@ func (q *Queries) CountTodos(ctx context.Context) (int64, error) {
 const countTodosByUser = `-- name: CountTodosByUser :one
 SELECT COUNT(*)
 FROM todos
-WHERE user_id = $1 AND deleted_at IS NULL
+WHERE user_id = ? AND deleted_at IS NULL
 `
 
-func (q *Queries) CountTodosByUser(ctx context.Context, userID uuid.UUID) (int64, error) {
+func (q *Queries) CountTodosByUser(ctx context.Context, userID string) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countTodosByUser, userID)
 	var count int64
 	err := row.Scan(&count)
@@ -42,28 +41,33 @@ const countTodosFiltered = `-- name: CountTodosFiltered :one
 SELECT COUNT(*)
 FROM todos
 WHERE deleted_at IS NULL
-  AND ($1::uuid IS NULL OR user_id = $1)
-  AND ($2::boolean IS NULL OR completed = $2)
-  AND ($3::varchar IS NULL OR priority = $3)
-  AND ($4::timestamp IS NULL OR due_date >= $4)
-  AND ($5::timestamp IS NULL OR due_date <= $5)
+  AND (? IS NULL OR user_id = ?)
+  AND (? IS NULL OR completed = ?)
+  AND (? IS NULL OR priority = ?)
+  AND (? IS NULL OR due_date >= ?)
+  AND (? IS NULL OR due_date <= ?)
 `
 
 type CountTodosFilteredParams struct {
-	UserID    uuid.NullUUID  `json:"user_id"`
-	Completed sql.NullBool   `json:"completed"`
-	Priority  sql.NullString `json:"priority"`
-	FromDate  sql.NullTime   `json:"from_date"`
-	ToDate    sql.NullTime   `json:"to_date"`
+	UserID      sql.NullString `json:"user_id"`
+	Completed   sql.NullBool   `json:"completed"`
+	Priority    sql.NullString `json:"priority"`
+	DueDateFrom sql.NullTime   `json:"due_date_from"`
+	DueDateTo   sql.NullTime   `json:"due_date_to"`
 }
 
 func (q *Queries) CountTodosFiltered(ctx context.Context, arg CountTodosFilteredParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countTodosFiltered,
 		arg.UserID,
+		arg.UserID,
+		arg.Completed,
 		arg.Completed,
 		arg.Priority,
-		arg.FromDate,
-		arg.ToDate,
+		arg.Priority,
+		arg.DueDateFrom,
+		arg.DueDateFrom,
+		arg.DueDateTo,
+		arg.DueDateTo,
 	)
 	var count int64
 	err := row.Scan(&count)
@@ -72,19 +76,19 @@ func (q *Queries) CountTodosFiltered(ctx context.Context, arg CountTodosFiltered
 
 const createTodo = `-- name: CreateTodo :exec
 INSERT INTO todos (id, user_id, title, description, completed, priority, due_date, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 type CreateTodoParams struct {
-	ID          uuid.UUID      `json:"id"`
-	UserID      uuid.UUID      `json:"user_id"`
+	ID          string         `json:"id"`
+	UserID      string         `json:"user_id"`
 	Title       string         `json:"title"`
 	Description sql.NullString `json:"description"`
-	Completed   sql.NullBool   `json:"completed"`
+	Completed   bool           `json:"completed"`
 	Priority    sql.NullString `json:"priority"`
 	DueDate     sql.NullTime   `json:"due_date"`
-	CreatedAt   sql.NullTime   `json:"created_at"`
-	UpdatedAt   sql.NullTime   `json:"updated_at"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
 }
 
 func (q *Queries) CreateTodo(ctx context.Context, arg CreateTodoParams) error {
@@ -105,10 +109,10 @@ func (q *Queries) CreateTodo(ctx context.Context, arg CreateTodoParams) error {
 const getTodoByID = `-- name: GetTodoByID :one
 SELECT id, user_id, title, description, completed, priority, due_date, created_at, updated_at, completed_at, deleted_at
 FROM todos
-WHERE id = $1 AND deleted_at IS NULL
+WHERE id = ? AND deleted_at IS NULL
 `
 
-func (q *Queries) GetTodoByID(ctx context.Context, id uuid.UUID) (Todo, error) {
+func (q *Queries) GetTodoByID(ctx context.Context, id string) (Todo, error) {
 	row := q.db.QueryRowContext(ctx, getTodoByID, id)
 	var i Todo
 	err := row.Scan(
@@ -130,15 +134,15 @@ func (q *Queries) GetTodoByID(ctx context.Context, id uuid.UUID) (Todo, error) {
 const getTodosByUserID = `-- name: GetTodosByUserID :many
 SELECT id, user_id, title, description, completed, priority, due_date, created_at, updated_at, completed_at, deleted_at
 FROM todos
-WHERE user_id = $1 AND deleted_at IS NULL
+WHERE user_id = ? AND deleted_at IS NULL
 ORDER BY created_at DESC
-LIMIT $2 OFFSET $3
+LIMIT ? OFFSET ?
 `
 
 type GetTodosByUserIDParams struct {
-	UserID uuid.UUID `json:"user_id"`
-	Limit  int32     `json:"limit"`
-	Offset int32     `json:"offset"`
+	UserID string `json:"user_id"`
+	Limit  int32  `json:"limit"`
+	Offset int32  `json:"offset"`
 }
 
 func (q *Queries) GetTodosByUserID(ctx context.Context, arg GetTodosByUserIDParams) ([]Todo, error) {
@@ -180,34 +184,39 @@ const getTodosFiltered = `-- name: GetTodosFiltered :many
 SELECT id, user_id, title, description, completed, priority, due_date, created_at, updated_at, completed_at, deleted_at
 FROM todos
 WHERE deleted_at IS NULL
-  AND ($1::uuid IS NULL OR user_id = $1)
-  AND ($2::boolean IS NULL OR completed = $2)
-  AND ($3::varchar IS NULL OR priority = $3)
-  AND ($4::timestamp IS NULL OR due_date >= $4)
-  AND ($5::timestamp IS NULL OR due_date <= $5)
+  AND (? IS NULL OR user_id = ?)
+  AND (? IS NULL OR completed = ?)
+  AND (? IS NULL OR priority = ?)
+  AND (? IS NULL OR due_date >= ?)
+  AND (? IS NULL OR due_date <= ?)
 ORDER BY created_at DESC
-LIMIT $7 OFFSET $6
+LIMIT ? OFFSET ?
 `
 
 type GetTodosFilteredParams struct {
-	UserID    uuid.NullUUID  `json:"user_id"`
-	Completed sql.NullBool   `json:"completed"`
-	Priority  sql.NullString `json:"priority"`
-	FromDate  sql.NullTime   `json:"from_date"`
-	ToDate    sql.NullTime   `json:"to_date"`
-	Offset    int32          `json:"offset"`
-	Limit     int32          `json:"limit"`
+	UserID      sql.NullString `json:"user_id"`
+	Completed   sql.NullBool   `json:"completed"`
+	Priority    sql.NullString `json:"priority"`
+	DueDateFrom sql.NullTime   `json:"due_date_from"`
+	DueDateTo   sql.NullTime   `json:"due_date_to"`
+	Limit       int32          `json:"limit"`
+	Offset      int32          `json:"offset"`
 }
 
 func (q *Queries) GetTodosFiltered(ctx context.Context, arg GetTodosFilteredParams) ([]Todo, error) {
 	rows, err := q.db.QueryContext(ctx, getTodosFiltered,
 		arg.UserID,
+		arg.UserID,
+		arg.Completed,
 		arg.Completed,
 		arg.Priority,
-		arg.FromDate,
-		arg.ToDate,
-		arg.Offset,
+		arg.Priority,
+		arg.DueDateFrom,
+		arg.DueDateFrom,
+		arg.DueDateTo,
+		arg.DueDateTo,
 		arg.Limit,
+		arg.Offset,
 	)
 	if err != nil {
 		return nil, err
@@ -244,35 +253,34 @@ func (q *Queries) GetTodosFiltered(ctx context.Context, arg GetTodosFilteredPara
 
 const softDeleteTodo = `-- name: SoftDeleteTodo :exec
 UPDATE todos
-SET deleted_at = NOW()
-WHERE id = $1 AND deleted_at IS NULL
+SET deleted_at = CURRENT_TIMESTAMP
+WHERE id = ? AND deleted_at IS NULL
 `
 
-func (q *Queries) SoftDeleteTodo(ctx context.Context, id uuid.UUID) error {
+func (q *Queries) SoftDeleteTodo(ctx context.Context, id string) error {
 	_, err := q.db.ExecContext(ctx, softDeleteTodo, id)
 	return err
 }
 
 const updateTodo = `-- name: UpdateTodo :exec
 UPDATE todos
-SET title = $2, description = $3, completed = $4, priority = $5, due_date = $6, updated_at = $7, completed_at = $8
-WHERE id = $1 AND deleted_at IS NULL
+SET title = ?, description = ?, completed = ?, priority = ?, due_date = ?, updated_at = ?, completed_at = ?
+WHERE id = ? AND deleted_at IS NULL
 `
 
 type UpdateTodoParams struct {
-	ID          uuid.UUID      `json:"id"`
 	Title       string         `json:"title"`
 	Description sql.NullString `json:"description"`
-	Completed   sql.NullBool   `json:"completed"`
+	Completed   bool           `json:"completed"`
 	Priority    sql.NullString `json:"priority"`
 	DueDate     sql.NullTime   `json:"due_date"`
-	UpdatedAt   sql.NullTime   `json:"updated_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
 	CompletedAt sql.NullTime   `json:"completed_at"`
+	ID          string         `json:"id"`
 }
 
 func (q *Queries) UpdateTodo(ctx context.Context, arg UpdateTodoParams) error {
 	_, err := q.db.ExecContext(ctx, updateTodo,
-		arg.ID,
 		arg.Title,
 		arg.Description,
 		arg.Completed,
@@ -280,6 +288,7 @@ func (q *Queries) UpdateTodo(ctx context.Context, arg UpdateTodoParams) error {
 		arg.DueDate,
 		arg.UpdatedAt,
 		arg.CompletedAt,
+		arg.ID,
 	)
 	return err
 }

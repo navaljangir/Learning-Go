@@ -1,8 +1,8 @@
 package handler
 
 import (
+	"todo_app/domain/service"
 	"todo_app/internal/dto"
-	"todo_app/internal/service"
 	"todo_app/pkg/constants"
 	"todo_app/pkg/utils"
 
@@ -12,11 +12,12 @@ import (
 
 // UserHandler handles user-related HTTP requests
 type UserHandler struct {
-	userService *service.UserService
+	userService service.UserService
 }
 
 // NewUserHandler creates a new user handler
-func NewUserHandler(userService *service.UserService) *UserHandler {
+// Returns UserHandlerInterface to enforce dependency on abstraction
+func NewUserHandler(userService service.UserService) UserHandlerInterface {
 	return &UserHandler{userService: userService}
 }
 

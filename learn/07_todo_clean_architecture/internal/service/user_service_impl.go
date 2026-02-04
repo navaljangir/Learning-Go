@@ -5,28 +5,32 @@ import (
 	"errors"
 	"todo_app/domain/entity"
 	"todo_app/domain/repository"
+	domainService "todo_app/domain/service"
 	"todo_app/internal/dto"
 	"todo_app/pkg/utils"
 
 	"github.com/google/uuid"
 )
 
-// UserService implements user-related business logic
-type UserService struct {
+// UserServiceImpl implements user-related business logic
+type UserServiceImpl struct {
 	userRepo repository.UserRepository
 	jwtUtil  *utils.JWTUtil
 }
 
+// Compile-time check to ensure UserServiceImpl implements UserService interface
+var _ domainService.UserService = (*UserServiceImpl)(nil)
+
 // NewUserService creates a new user service
-func NewUserService(userRepo repository.UserRepository, jwtUtil *utils.JWTUtil) *UserService {
-	return &UserService{
+func NewUserService(userRepo repository.UserRepository, jwtUtil *utils.JWTUtil) domainService.UserService {
+	return &UserServiceImpl{
 		userRepo: userRepo,
 		jwtUtil:  jwtUtil,
 	}
 }
 
 // Register creates a new user account
-func (s *UserService) Register(ctx context.Context, req dto.RegisterRequest) (*dto.LoginResponse, error) {
+func (s *UserServiceImpl) Register(ctx context.Context, req dto.RegisterRequest) (*dto.LoginResponse, error) {
 	// Check if username already exists
 	exists, err := s.userRepo.ExistsByUsername(ctx, req.Username)
 	if err != nil {
@@ -73,7 +77,7 @@ func (s *UserService) Register(ctx context.Context, req dto.RegisterRequest) (*d
 }
 
 // Login authenticates a user and returns a JWT token
-func (s *UserService) Login(ctx context.Context, req dto.LoginRequest) (*dto.LoginResponse, error) {
+func (s *UserServiceImpl) Login(ctx context.Context, req dto.LoginRequest) (*dto.LoginResponse, error) {
 	// Find user by username
 	user, err := s.userRepo.FindByUsername(ctx, req.Username)
 	if err != nil {
@@ -104,7 +108,7 @@ func (s *UserService) Login(ctx context.Context, req dto.LoginRequest) (*dto.Log
 }
 
 // GetProfile retrieves the user's profile
-func (s *UserService) GetProfile(ctx context.Context, userID uuid.UUID) (*dto.UserResponse, error) {
+func (s *UserServiceImpl) GetProfile(ctx context.Context, userID uuid.UUID) (*dto.UserResponse, error) {
 	user, err := s.userRepo.FindByID(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -119,7 +123,7 @@ func (s *UserService) GetProfile(ctx context.Context, userID uuid.UUID) (*dto.Us
 }
 
 // UpdateProfile updates the user's profile
-func (s *UserService) UpdateProfile(ctx context.Context, userID uuid.UUID, req dto.UpdateUserRequest) (*dto.UserResponse, error) {
+func (s *UserServiceImpl) UpdateProfile(ctx context.Context, userID uuid.UUID, req dto.UpdateUserRequest) (*dto.UserResponse, error) {
 	user, err := s.userRepo.FindByID(ctx, userID)
 	if err != nil {
 		return nil, err

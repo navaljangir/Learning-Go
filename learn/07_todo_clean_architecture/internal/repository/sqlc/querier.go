@@ -6,27 +6,25 @@ package sqlc
 
 import (
 	"context"
-
-	"github.com/google/uuid"
 )
 
 type Querier interface {
 	CheckEmailExists(ctx context.Context, email string) (bool, error)
 	CheckUsernameExists(ctx context.Context, username string) (bool, error)
 	CountTodos(ctx context.Context) (int64, error)
-	CountTodosByUser(ctx context.Context, userID uuid.UUID) (int64, error)
+	CountTodosByUser(ctx context.Context, userID string) (int64, error)
 	CountTodosFiltered(ctx context.Context, arg CountTodosFilteredParams) (int64, error)
 	CreateTodo(ctx context.Context, arg CreateTodoParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error
-	GetTodoByID(ctx context.Context, id uuid.UUID) (Todo, error)
+	GetTodoByID(ctx context.Context, id string) (Todo, error)
 	GetTodosByUserID(ctx context.Context, arg GetTodosByUserIDParams) ([]Todo, error)
 	GetTodosFiltered(ctx context.Context, arg GetTodosFilteredParams) ([]Todo, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
-	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
+	GetUserByID(ctx context.Context, id string) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
-	SoftDeleteTodo(ctx context.Context, id uuid.UUID) error
-	SoftDeleteUser(ctx context.Context, id uuid.UUID) error
+	SoftDeleteTodo(ctx context.Context, id string) error
+	SoftDeleteUser(ctx context.Context, id string) error
 	UpdateTodo(ctx context.Context, arg UpdateTodoParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) error
 }

@@ -6,23 +6,27 @@ import (
 	"time"
 	"todo_app/domain/entity"
 	"todo_app/domain/repository"
+	domainService "todo_app/domain/service"
 	"todo_app/internal/dto"
 
 	"github.com/google/uuid"
 )
 
-// TodoService implements todo-related business logic
-type TodoService struct {
+// TodoServiceImpl implements todo-related business logic
+type TodoServiceImpl struct {
 	todoRepo repository.TodoRepository
 }
 
+// Compile-time check to ensure TodoServiceImpl implements TodoService interface
+var _ domainService.TodoService = (*TodoServiceImpl)(nil)
+
 // NewTodoService creates a new todo service
-func NewTodoService(todoRepo repository.TodoRepository) *TodoService {
-	return &TodoService{todoRepo: todoRepo}
+func NewTodoService(todoRepo repository.TodoRepository) domainService.TodoService {
+	return &TodoServiceImpl{todoRepo: todoRepo}
 }
 
 // Create creates a new todo
-func (s *TodoService) Create(ctx context.Context, userID uuid.UUID, req dto.CreateTodoRequest) (*dto.TodoResponse, error) {
+func (s *TodoServiceImpl) Create(ctx context.Context, userID uuid.UUID, req dto.CreateTodoRequest) (*dto.TodoResponse, error) {
 	// Convert priority string to entity type
 	priority := entity.Priority(req.Priority)
 
@@ -39,7 +43,7 @@ func (s *TodoService) Create(ctx context.Context, userID uuid.UUID, req dto.Crea
 }
 
 // GetByID retrieves a specific todo by ID
-func (s *TodoService) GetByID(ctx context.Context, todoID, userID uuid.UUID) (*dto.TodoResponse, error) {
+func (s *TodoServiceImpl) GetByID(ctx context.Context, todoID, userID uuid.UUID) (*dto.TodoResponse, error) {
 	todo, err := s.todoRepo.FindByID(ctx, todoID)
 	if err != nil {
 		return nil, err
@@ -55,7 +59,7 @@ func (s *TodoService) GetByID(ctx context.Context, todoID, userID uuid.UUID) (*d
 }
 
 // List retrieves a paginated list of todos for a user
-func (s *TodoService) List(ctx context.Context, userID uuid.UUID, page, pageSize int) (*dto.TodoListResponse, error) {
+func (s *TodoServiceImpl) List(ctx context.Context, userID uuid.UUID, page, pageSize int) (*dto.TodoListResponse, error) {
 	// Validate pagination parameters
 	if page < 1 {
 		page = 1
@@ -97,7 +101,7 @@ func (s *TodoService) List(ctx context.Context, userID uuid.UUID, page, pageSize
 }
 
 // Update updates an existing todo
-func (s *TodoService) Update(ctx context.Context, todoID, userID uuid.UUID, req dto.UpdateTodoRequest) (*dto.TodoResponse, error) {
+func (s *TodoServiceImpl) Update(ctx context.Context, todoID, userID uuid.UUID, req dto.UpdateTodoRequest) (*dto.TodoResponse, error) {
 	// Fetch existing todo
 	todo, err := s.todoRepo.FindByID(ctx, todoID)
 	if err != nil {
@@ -134,7 +138,7 @@ func (s *TodoService) Update(ctx context.Context, todoID, userID uuid.UUID, req 
 }
 
 // ToggleComplete toggles the completion status of a todo
-func (s *TodoService) ToggleComplete(ctx context.Context, todoID, userID uuid.UUID) (*dto.TodoResponse, error) {
+func (s *TodoServiceImpl) ToggleComplete(ctx context.Context, todoID, userID uuid.UUID) (*dto.TodoResponse, error) {
 	// Fetch existing todo
 	todo, err := s.todoRepo.FindByID(ctx, todoID)
 	if err != nil {
@@ -163,7 +167,7 @@ func (s *TodoService) ToggleComplete(ctx context.Context, todoID, userID uuid.UU
 }
 
 // Delete soft deletes a todo
-func (s *TodoService) Delete(ctx context.Context, todoID, userID uuid.UUID) error {
+func (s *TodoServiceImpl) Delete(ctx context.Context, todoID, userID uuid.UUID) error {
 	// Fetch existing todo
 	todo, err := s.todoRepo.FindByID(ctx, todoID)
 	if err != nil {

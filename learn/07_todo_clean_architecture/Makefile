@@ -113,26 +113,13 @@ sqlc-verify: ## Verify sqlc queries without generating code
 	@sqlc verify
 	@echo "✓ sqlc queries verified!"
 
-install-tools: ## Install development tools
+install-tools: ## Install development tools (MySQL version)
 	@echo "Installing development tools..."
 	@go install github.com/air-verse/air@latest
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-	@go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+	@go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 	@go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 	@echo "✓ Tools installed!"
-
-docker-up: ## Start services with docker-compose
-	@echo "Starting services..."
-	@docker-compose up -d
-	@echo "✓ Services started!"
-
-docker-down: ## Stop services with docker-compose
-	@echo "Stopping services..."
-	@docker-compose down
-	@echo "✓ Services stopped!"
-
-docker-logs: ## View docker-compose logs
-	@docker-compose logs -f
 
 all: deps fmt vet test build ## Run all checks and build
 	@echo "✓ All checks passed!"
