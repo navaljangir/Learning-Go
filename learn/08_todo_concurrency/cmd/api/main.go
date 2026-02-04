@@ -62,7 +62,7 @@ func main() {
 		printEndpoints()
 
 		log.Println("\n🚀 Server starting on http://localhost:8080")
-		log.Println("Press Ctrl+C to stop\n")
+		log.Println("Press Ctrl+C to stop")
 
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server error: %v", err)

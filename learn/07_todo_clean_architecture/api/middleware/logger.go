@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// RequestIDMiddleware generates and injects a unique request ID for tracing
+// RequestIDMiddleware generates and injects a unique request ID for tracingque request ID for tracing
 func RequestIDMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		requestID := c.GetHeader("X-Request-ID")

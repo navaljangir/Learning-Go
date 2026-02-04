@@ -43,7 +43,7 @@ func (h *BatchHandler) ProcessBatch(c *gin.Context) {
 
 	fmt.Printf("\n🚀 Starting batch processing of %d todos...\n", len(req.Todos))
 	fmt.Println("Watch the console to see workers processing concurrently!")
-	fmt.Println("═══════════════════════════════════════════════════════\n")
+	fmt.Println("═══════════════════════════════════════════════════════")
 
 	// Process batch concurrently using worker pool
 	// GOROUTINES: Multiple workers process jobs simultaneously
