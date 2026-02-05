@@ -6,26 +6,34 @@ package sqlc
 
 import (
 	"context"
+	"database/sql"
 )
 
 type Querier interface {
 	CheckEmailExists(ctx context.Context, email string) (bool, error)
 	CheckUsernameExists(ctx context.Context, username string) (bool, error)
+	CountTodoListsByUser(ctx context.Context, userID string) (int64, error)
 	CountTodos(ctx context.Context) (int64, error)
 	CountTodosByUser(ctx context.Context, userID string) (int64, error)
 	CountTodosFiltered(ctx context.Context, arg CountTodosFilteredParams) (int64, error)
 	CreateTodo(ctx context.Context, arg CreateTodoParams) error
+	CreateTodoList(ctx context.Context, arg CreateTodoListParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error
-	GetTodoByID(ctx context.Context, id string) (Todo, error)
-	GetTodosByUserID(ctx context.Context, arg GetTodosByUserIDParams) ([]Todo, error)
-	GetTodosFiltered(ctx context.Context, arg GetTodosFilteredParams) ([]Todo, error)
+	GetTodoByID(ctx context.Context, id string) (GetTodoByIDRow, error)
+	GetTodoListByID(ctx context.Context, id string) (TodoList, error)
+	GetTodoListsByUserID(ctx context.Context, userID string) ([]TodoList, error)
+	GetTodosByListID(ctx context.Context, listID sql.NullString) ([]GetTodosByListIDRow, error)
+	GetTodosByUserID(ctx context.Context, arg GetTodosByUserIDParams) ([]GetTodosByUserIDRow, error)
+	GetTodosFiltered(ctx context.Context, arg GetTodosFilteredParams) ([]GetTodosFilteredRow, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id string) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	SoftDeleteTodo(ctx context.Context, id string) error
+	SoftDeleteTodoList(ctx context.Context, id string) error
 	SoftDeleteUser(ctx context.Context, id string) error
 	UpdateTodo(ctx context.Context, arg UpdateTodoParams) error
+	UpdateTodoList(ctx context.Context, arg UpdateTodoListParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) error
 }
 

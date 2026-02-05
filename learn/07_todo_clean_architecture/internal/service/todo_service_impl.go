@@ -182,3 +182,47 @@ func (s *TodoServiceImpl) Delete(ctx context.Context, todoID, userID uuid.UUID) 
 	// Soft delete the todo
 	return s.todoRepo.Delete(ctx, todoID)
 }
+
+// MoveTodos moves multiple todos to a specific list or to global (nil list_id)
+func (s *TodoServiceImpl) MoveTodos(ctx context.Context, userID uuid.UUID, req dto.MoveTodosRequest) error {
+	// Validate input
+	if len(req.TodoIDs) == 0 {
+		return errors.New("no todos specified")
+	}
+
+	// Convert string IDs to UUIDs
+	todoIDs := make([]uuid.UUID, len(req.TodoIDs))
+	for i, idStr := range req.TodoIDs {
+		id, err := uuid.Parse(idStr)
+		if err != nil {
+			return errors.New("invalid todo ID format")
+		}
+		todoIDs[i] = id
+	}
+
+	// Authorization check: verify all todos belong to the user
+	// This is important for security - don't move todos the user doesn't own
+	for _, todoID := range todoIDs {
+		todo, err := s.todoRepo.FindByID(ctx, todoID)
+		if err != nil {
+			return errors.New("one or more todos not found")
+		}
+		if !todo.BelongsToUser(userID) {
+			return errors.New("unauthorized access to one or more todos")
+		}
+	}
+
+	// Convert list_id string to UUID pointer
+	var listIDPtr *uuid.UUID
+	if req.ListID != nil {
+		listID, err := uuid.Parse(*req.ListID)
+		if err != nil {
+			return errors.New("invalid list ID format")
+		}
+		listIDPtr = &listID
+		// TODO: In Phase 2, verify the list exists and belongs to the user
+	}
+
+	// Perform the bulk update
+	return s.todoRepo.UpdateListID(ctx, todoIDs, listIDPtr, userID)
+}

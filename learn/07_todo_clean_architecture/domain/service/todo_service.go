@@ -30,4 +30,8 @@ type TodoService interface {
 	// Delete soft deletes a todo
 	// Returns error if todo doesn't exist or user is not authorized
 	Delete(ctx context.Context, todoID, userID uuid.UUID) error
+
+	// MoveTodos moves multiple todos to a specific list or to global (nil list_id)
+	// Returns error if any todo doesn't exist or user is not authorized
+	MoveTodos(ctx context.Context, userID uuid.UUID, req dto.MoveTodosRequest) error
 }

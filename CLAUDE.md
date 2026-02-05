@@ -8,6 +8,17 @@ A structured learning path for mastering Go (Golang) with a focus on backend dev
 
 > **For Claude:** Follow these preferences when helping with this project.
 
+### Teaching Approach (IMPORTANT)
+- **Explain internal workings**: Show what Go compiler checks internally, not just what to do
+- **Show actual errors**: When explaining problems, show real compile errors with examples
+- **Step-by-step breakdown**: Break complex concepts into small, numbered steps
+- **Visual diagrams**: Use ASCII diagrams to show relationships and data flow
+- **Compare approaches**: Show "without X" vs "with X" to demonstrate why something exists
+- **Don't assume knowledge**: Explain libraries (testify), tools, and concepts user hasn't seen
+- **Concrete examples first**: Real code with comments, then abstract explanations
+- **Memory/type visualization**: Show what's happening in memory, what types Go sees
+
+### Documentation
 - **Create documentation**: When explaining new Go concepts, create a `.md` file in `learn/docs/` folder
 - **User context**: User is learning Go, coming from Node.js background
 - **Use analogies**: Compare Go patterns to Node.js equivalents when helpful

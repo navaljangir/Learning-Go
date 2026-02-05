@@ -44,19 +44,19 @@ func main() {
 	defer db.Close()
 
 	// Initialize repositories (Infrastructure layer)
-	userRepo, todoRepo := initRepositories(db)
+	userRepo, todoRepo, listRepo := initRepositories(db)
 
 	// Initialize utilities
 	jwtUtil := initJWT(cfg)
 
 	// Initialize services (Application layer)
-	userService, todoService := initServices(userRepo, todoRepo, jwtUtil)
+	userService, todoService, listService := initServices(userRepo, todoRepo, listRepo, jwtUtil)
 
 	// Initialize handlers (Presentation layer)
-	authHandler, userHandler, todoHandler := initHandlers(userService, todoService)
+	authHandler, userHandler, todoHandler, listHandler := initHandlers(userService, todoService, listService)
 
 	// Setup router with all routes
-	r := setupRouter(authHandler, userHandler, todoHandler, jwtUtil)
+	r := setupRouter(authHandler, userHandler, todoHandler, listHandler, jwtUtil)
 
 	// Create and start HTTP server
 	srv := createServer(cfg, r)
@@ -71,7 +71,7 @@ func configureGinMode(environment string) {
 	if environment == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
-	log.Printf("✓ Gin mode: %s", gin.Mode())
+	log.Printf("[OK] Gin mode: %s", gin.Mode())
 }
 
 // initDatabase initializes the database connection
@@ -86,22 +86,23 @@ func initDatabase(cfg *config.Config) *db_repo.Database {
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
-	log.Println("✓ Database connected successfully (MySQL)")
+	log.Println("[OK] Database connected successfully (MySQL)")
 	return db
 }
 
 // initRepositories initializes all repositories
-func initRepositories(db *db_repo.Database) (repository.UserRepository, repository.TodoRepository) {
+func initRepositories(db *db_repo.Database) (repository.UserRepository, repository.TodoRepository, repository.TodoListRepository) {
 	userRepo := sqlc_impl.NewUserRepository(db.DB)
 	todoRepo := sqlc_impl.NewTodoRepository(db.DB)
-	log.Println("✓ Repositories initialized (sqlc)")
-	return userRepo, todoRepo
+	listRepo := sqlc_impl.NewTodoListRepository(db.DB)
+	log.Println("[OK] Repositories initialized (sqlc)")
+	return userRepo, todoRepo, listRepo
 }
 
 // initJWT initializes JWT utility
 func initJWT(cfg *config.Config) *utils.JWTUtil {
 	jwtUtil := utils.NewJWTUtil(cfg.JWT.Secret, cfg.JWT.ExpiryHours, cfg.JWT.Issuer)
-	log.Println("✓ JWT utility initialized")
+	log.Println("[OK] JWT utility initialized")
 	return jwtUtil
 }
 
@@ -109,12 +110,14 @@ func initJWT(cfg *config.Config) *utils.JWTUtil {
 func initServices(
 	userRepo repository.UserRepository,
 	todoRepo repository.TodoRepository,
+	listRepo repository.TodoListRepository,
 	jwtUtil *utils.JWTUtil,
-) (service.UserService, service.TodoService) {
+) (service.UserService, service.TodoService, service.TodoListService) {
 	userService := serviceImpl.NewUserService(userRepo, jwtUtil)
 	todoService := serviceImpl.NewTodoService(todoRepo)
-	log.Println("✓ Services initialized")
-	return userService, todoService
+	listService := serviceImpl.NewTodoListService(listRepo, todoRepo)
+	log.Println("[OK] Services initialized")
+	return userService, todoService, listService
 }
 
 // initHandlers initializes all HTTP handlers
@@ -122,12 +125,14 @@ func initServices(
 func initHandlers(
 	userService service.UserService,
 	todoService service.TodoService,
-) (handler.AuthHandlerInterface, handler.UserHandlerInterface, handler.TodoHandlerInterface) {
+	listService service.TodoListService,
+) (handler.AuthHandlerInterface, handler.UserHandlerInterface, handler.TodoHandlerInterface, handler.TodoListHandlerInterface) {
 	authHandler := handler.NewAuthHandler(userService)
 	userHandler := handler.NewUserHandler(userService)
 	todoHandler := handler.NewTodoHandler(todoService)
-	log.Println("✓ Handlers initialized")
-	return authHandler, userHandler, todoHandler
+	listHandler := handler.NewTodoListHandler(listService)
+	log.Println("[OK] Handlers initialized")
+	return authHandler, userHandler, todoHandler, listHandler
 }
 
 // setupRouter configures all routes
@@ -136,10 +141,11 @@ func setupRouter(
 	authHandler handler.AuthHandlerInterface,
 	userHandler handler.UserHandlerInterface,
 	todoHandler handler.TodoHandlerInterface,
+	listHandler handler.TodoListHandlerInterface,
 	jwtUtil *utils.JWTUtil,
 ) *gin.Engine {
-	r := router.SetupRouter(authHandler, userHandler, todoHandler, jwtUtil)
-	log.Println("✓ Router configured")
+	r := router.SetupRouter(authHandler, userHandler, todoHandler, listHandler, jwtUtil)
+	log.Println("[OK] Router configured")
 	return r
 }
 
@@ -167,26 +173,35 @@ func startServer(srv *http.Server, cfg *config.Config) {
 func printStartupBanner(cfg *config.Config) {
 	separator := repeat("=", 60)
 	log.Println("\n" + separator)
-	log.Printf("🚀 Server starting on http://localhost%s", cfg.Server.Port)
+	log.Printf("Server starting on http://localhost%s", cfg.Server.Port)
 	log.Println(separator)
-	log.Println("\n📋 Available Endpoints:")
-	log.Println("\n  🌍 Public Endpoints:")
+	log.Println("\nAvailable Endpoints:")
+	log.Println("\n  Public Endpoints:")
 	log.Println("    GET    /health                    - Health check")
 	log.Println("    POST   /api/v1/auth/register      - Register new user")
 	log.Println("    POST   /api/v1/auth/login         - Login and get token")
-	log.Println("\n  🔒 Protected Endpoints (require Bearer token):")
+	log.Println("\n  Protected Endpoints (require Bearer token):")
 	log.Println("    GET    /api/v1/users/profile      - Get user profile")
 	log.Println("    PUT    /api/v1/users/profile      - Update user profile")
+	log.Println("\n  Todo Endpoints:")
 	log.Println("    GET    /api/v1/todos              - List todos (with pagination)")
 	log.Println("    POST   /api/v1/todos              - Create new todo")
 	log.Println("    GET    /api/v1/todos/:id          - Get specific todo")
 	log.Println("    PUT    /api/v1/todos/:id          - Update todo")
 	log.Println("    PATCH  /api/v1/todos/:id/toggle   - Toggle completion")
 	log.Println("    DELETE /api/v1/todos/:id          - Delete todo")
+	log.Println("    PATCH  /api/v1/todos/move         - Move todos to list/global")
+	log.Println("\n  List Endpoints:")
+	log.Println("    GET    /api/v1/lists              - Get all lists")
+	log.Println("    POST   /api/v1/lists              - Create new list")
+	log.Println("    GET    /api/v1/lists/:id          - Get list with todos")
+	log.Println("    PUT    /api/v1/lists/:id          - Update list (rename)")
+	log.Println("    DELETE /api/v1/lists/:id          - Delete list")
+	log.Println("    POST   /api/v1/lists/:id/duplicate - Duplicate list")
 	log.Println("\n" + separator)
 	log.Printf("Environment: %s", cfg.Server.Environment)
 	log.Printf("Database: %s@%s:%s/%s", cfg.Database.User, cfg.Database.Host, cfg.Database.Port, cfg.Database.DBName)
-	log.Println("\n💡 Press Ctrl+C to stop the server")
+	log.Println("\nPress Ctrl+C to stop the server")
 	log.Println(separator + "\n")
 }
 
@@ -198,8 +213,8 @@ func waitForShutdown(srv *http.Server) {
 
 	// Block until signal received
 	sig := <-quit
-	log.Printf("\n\n⚠️  Received signal: %v", sig)
-	log.Println("🛑 Shutting down server gracefully...")
+	log.Printf("\n\n[WARN] Received signal: %v", sig)
+	log.Println("[SHUTDOWN] Shutting down server gracefully...")
 
 	// Give outstanding requests 10 seconds to complete
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -209,7 +224,7 @@ func waitForShutdown(srv *http.Server) {
 		log.Fatalf("Server forced to shutdown: %v", err)
 	}
 
-	log.Println("✓ Server stopped gracefully")
+	log.Println("[OK] Server stopped gracefully")
 }
 
 // Helper function to repeat strings (like Python's str * n)

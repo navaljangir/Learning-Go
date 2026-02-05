@@ -13,6 +13,7 @@ type CreateTodoRequest struct {
 	Description string     `json:"description" binding:"max=2000"`
 	Priority    string     `json:"priority" binding:"required,oneof=low medium high urgent"`
 	DueDate     *time.Time `json:"due_date"`
+	ListID      *string    `json:"list_id" binding:"omitempty,uuid"` // Optional: assign to list
 }
 
 // UpdateTodoRequest represents a request to update a todo
@@ -23,9 +24,16 @@ type UpdateTodoRequest struct {
 	DueDate     *time.Time `json:"due_date"`
 }
 
+// MoveTodosRequest represents a request to move todos between lists or to global
+type MoveTodosRequest struct {
+	TodoIDs []string `json:"todo_ids" binding:"required,min=1,dive,uuid"`
+	ListID  *string  `json:"list_id" binding:"omitempty,uuid"` // null = move to global
+}
+
 // TodoResponse represents a todo in API responses
 type TodoResponse struct {
 	ID          uuid.UUID  `json:"id"`
+	ListID      *uuid.UUID `json:"list_id,omitempty"` // null = global todo
 	Title       string     `json:"title"`
 	Description string     `json:"description"`
 	Completed   bool       `json:"completed"`
@@ -58,6 +66,7 @@ type TodoStatsResponse struct {
 func TodoToResponse(todo *entity.Todo) TodoResponse {
 	return TodoResponse{
 		ID:          todo.ID,
+		ListID:      todo.ListID,
 		Title:       todo.Title,
 		Description: todo.Description,
 		Completed:   todo.Completed,

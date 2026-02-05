@@ -42,4 +42,29 @@ type TodoHandlerInterface interface {
 
 	// Delete soft deletes a todo
 	Delete(c *gin.Context)
+
+	// MoveTodos moves multiple todos to a list or to global
+	MoveTodos(c *gin.Context)
+}
+
+// TodoListHandlerInterface defines methods for todo list handlers
+// This interface allows for easier testing and dependency injection
+type TodoListHandlerInterface interface {
+	// Create creates a new list
+	Create(c *gin.Context)
+
+	// List retrieves all lists for a user
+	List(c *gin.Context)
+
+	// GetByID retrieves a specific list by ID with its todos
+	GetByID(c *gin.Context)
+
+	// Update updates a list (rename)
+	Update(c *gin.Context)
+
+	// Delete soft deletes a list
+	Delete(c *gin.Context)
+
+	// Duplicate creates a copy of a list with all its todos
+	Duplicate(c *gin.Context)
 }

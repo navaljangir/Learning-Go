@@ -1,14 +1,14 @@
 -- name: CreateTodo :exec
-INSERT INTO todos (id, user_id, title, description, completed, priority, due_date, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO todos (id, user_id, list_id, title, description, completed, priority, due_date, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- name: GetTodoByID :one
-SELECT id, user_id, title, description, completed, priority, due_date, created_at, updated_at, completed_at, deleted_at
+SELECT id, user_id, list_id, title, description, completed, priority, due_date, created_at, updated_at, completed_at, deleted_at
 FROM todos
 WHERE id = ? AND deleted_at IS NULL;
 
 -- name: GetTodosByUserID :many
-SELECT id, user_id, title, description, completed, priority, due_date, created_at, updated_at, completed_at, deleted_at
+SELECT id, user_id, list_id, title, description, completed, priority, due_date, created_at, updated_at, completed_at, deleted_at
 FROM todos
 WHERE user_id = ? AND deleted_at IS NULL
 ORDER BY created_at DESC
@@ -16,7 +16,7 @@ LIMIT ? OFFSET ?;
 
 -- name: UpdateTodo :exec
 UPDATE todos
-SET title = ?, description = ?, completed = ?, priority = ?, due_date = ?, updated_at = ?, completed_at = ?
+SET title = ?, description = ?, completed = ?, priority = ?, due_date = ?, updated_at = ?, completed_at = ?, list_id = ?
 WHERE id = ? AND deleted_at IS NULL;
 
 -- name: SoftDeleteTodo :exec
@@ -35,7 +35,7 @@ FROM todos
 WHERE deleted_at IS NULL;
 
 -- name: GetTodosFiltered :many
-SELECT id, user_id, title, description, completed, priority, due_date, created_at, updated_at, completed_at, deleted_at
+SELECT id, user_id, list_id, title, description, completed, priority, due_date, created_at, updated_at, completed_at, deleted_at
 FROM todos
 WHERE deleted_at IS NULL
   AND (sqlc.narg('user_id') IS NULL OR user_id = sqlc.narg('user_id'))

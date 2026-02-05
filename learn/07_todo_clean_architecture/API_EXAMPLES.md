@@ -1,0 +1,563 @@
+# API Examples with Curl Commands
+
+Base URL: `http://localhost:8080`
+
+---
+
+## Authentication Endpoints
+
+### Register
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "testuser1",
+    "email": "test1@example.com",
+    "password": "password123"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "user": {
+      "id": "eabe56d5-6a1c-48da-8351-b0129d9813ec",
+      "username": "testuser1",
+      "email": "test1@example.com",
+      "full_name": "",
+      "created_at": "2026-02-05T16:37:42.188692504+05:30",
+      "updated_at": "2026-02-05T16:37:42.188692504+05:30"
+    },
+    "expires_at": 1770376062
+  }
+}
+```
+
+---
+
+### Login
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "testuser1",
+    "password": "password123"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "user": {
+      "id": "eabe56d5-6a1c-48da-8351-b0129d9813ec",
+      "username": "testuser1",
+      "email": "test1@example.com",
+      "full_name": "",
+      "created_at": "2026-02-05T11:07:42Z",
+      "updated_at": "2026-02-05T11:07:42Z"
+    },
+    "expires_at": 1770376067
+  }
+}
+```
+
+---
+
+## User Profile Endpoints
+
+### Get Profile
+```bash
+curl -X GET http://localhost:8080/api/v1/users/profile \
+  -H "Authorization: Bearer [TOKEN]"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "eabe56d5-6a1c-48da-8351-b0129d9813ec",
+    "username": "testuser1",
+    "email": "test1@example.com",
+    "full_name": "",
+    "created_at": "2026-02-05T11:07:42Z",
+    "updated_at": "2026-02-05T11:07:42Z"
+  }
+}
+```
+
+---
+
+## Todo Endpoints
+
+### Create Todo (Global - no list)
+```bash
+curl -X POST http://localhost:8080/api/v1/todos \
+  -H "Authorization: Bearer [TOKEN]" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Buy groceries",
+    "description": "Milk, eggs, bread",
+    "priority": "medium"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "2a97f648-c496-4703-90ef-b094ac34c5ba",
+    "title": "Buy groceries",
+    "description": "Milk, eggs, bread",
+    "completed": false,
+    "priority": "medium",
+    "created_at": "2026-02-05T16:38:12.912501402+05:30",
+    "updated_at": "2026-02-05T16:38:12.912501402+05:30",
+    "is_overdue": false
+  }
+}
+```
+
+---
+
+### Create Todo (In a specific list)
+```bash
+curl -X POST http://localhost:8080/api/v1/todos \
+  -H "Authorization: Bearer [TOKEN]" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Complete API documentation",
+    "priority": "high",
+    "list_id": "62ff611b-b155-47f2-9476-cd4a0cad400c"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "97c4fa49-925a-477a-b963-027b46788df7",
+    "title": "Complete API documentation",
+    "description": "",
+    "completed": false,
+    "priority": "high",
+    "created_at": "2026-02-05T16:38:43.764271555+05:30",
+    "updated_at": "2026-02-05T16:38:43.764271555+05:30",
+    "is_overdue": false
+  }
+}
+```
+
+---
+
+### List All Todos
+```bash
+curl -X GET "http://localhost:8080/api/v1/todos" \
+  -H "Authorization: Bearer [TOKEN]"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "todos": [
+      {
+        "id": "b7a8f38d-5c7e-462f-8655-2f8fd19144d7",
+        "title": "Finish project",
+        "description": "",
+        "completed": false,
+        "priority": "high",
+        "created_at": "2026-02-05T11:08:15Z",
+        "updated_at": "2026-02-05T11:08:15Z",
+        "is_overdue": false
+      },
+      {
+        "id": "2a97f648-c496-4703-90ef-b094ac34c5ba",
+        "title": "Buy groceries",
+        "description": "Milk, eggs, bread",
+        "completed": false,
+        "priority": "medium",
+        "created_at": "2026-02-05T11:08:13Z",
+        "updated_at": "2026-02-05T11:08:13Z",
+        "is_overdue": false
+      }
+    ],
+    "total": 2,
+    "page": 1,
+    "page_size": 10,
+    "total_pages": 1
+  }
+}
+```
+
+---
+
+### Get Single Todo
+```bash
+curl -X GET http://localhost:8080/api/v1/todos/2a97f648-c496-4703-90ef-b094ac34c5ba \
+  -H "Authorization: Bearer [TOKEN]"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "2a97f648-c496-4703-90ef-b094ac34c5ba",
+    "title": "Buy groceries",
+    "description": "Milk, eggs, bread",
+    "completed": false,
+    "priority": "medium",
+    "created_at": "2026-02-05T11:08:13Z",
+    "updated_at": "2026-02-05T11:08:13Z",
+    "is_overdue": false
+  }
+}
+```
+
+---
+
+### Update Todo
+```bash
+curl -X PUT http://localhost:8080/api/v1/todos/2a97f648-c496-4703-90ef-b094ac34c5ba \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer [TOKEN]" \
+  -d '{
+    "title": "Buy groceries and fruits"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "2a97f648-c496-4703-90ef-b094ac34c5ba",
+    "title": "Buy groceries and fruits",
+    "description": "Milk, eggs, bread",
+    "completed": false,
+    "priority": "medium",
+    "created_at": "2026-02-05T11:08:13Z",
+    "updated_at": "2026-02-05T16:38:38.342140887+05:30",
+    "is_overdue": false
+  }
+}
+```
+
+---
+
+### Toggle Todo Completion
+```bash
+curl -X PATCH http://localhost:8080/api/v1/todos/2a97f648-c496-4703-90ef-b094ac34c5ba/toggle \
+  -H "Authorization: Bearer [TOKEN]"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "2a97f648-c496-4703-90ef-b094ac34c5ba",
+    "title": "Buy groceries and fruits",
+    "description": "Milk, eggs, bread",
+    "completed": true,
+    "priority": "medium",
+    "created_at": "2026-02-05T11:08:13Z",
+    "updated_at": "2026-02-05T16:38:41.17774522+05:30",
+    "completed_at": "2026-02-05T16:38:41.17774522+05:30",
+    "is_overdue": false
+  }
+}
+```
+
+---
+
+### Delete Todo
+```bash
+curl -X DELETE http://localhost:8080/api/v1/todos/b7a8f38d-5c7e-462f-8655-2f8fd19144d7 \
+  -H "Authorization: Bearer [TOKEN]"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "todo deleted successfully"
+  }
+}
+```
+
+---
+
+## List Management Endpoints
+
+### Create List
+```bash
+curl -X POST http://localhost:8080/api/v1/lists \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer [TOKEN]" \
+  -d '{
+    "name": "Work Projects"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "62ff611b-b155-47f2-9476-cd4a0cad400c",
+    "user_id": "ee293d6f-a11d-4f80-8eea-efd01a047383",
+    "name": "Work Projects",
+    "created_at": "2026-02-05T16:38:12.302840949+05:30",
+    "updated_at": "2026-02-05T16:38:12.302840949+05:30"
+  }
+}
+```
+
+---
+
+### Get All Lists
+```bash
+curl -X GET http://localhost:8080/api/v1/lists \
+  -H "Authorization: Bearer [TOKEN]"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "lists": [
+      {
+        "id": "03ed90f6-6998-41b3-9cd1-bd0b2dfc2db8",
+        "user_id": "ee293d6f-a11d-4f80-8eea-efd01a047383",
+        "name": "Personal Tasks",
+        "created_at": "2026-02-05T11:08:14Z",
+        "updated_at": "2026-02-05T11:08:14Z"
+      },
+      {
+        "id": "62ff611b-b155-47f2-9476-cd4a0cad400c",
+        "user_id": "ee293d6f-a11d-4f80-8eea-efd01a047383",
+        "name": "Work Projects",
+        "created_at": "2026-02-05T11:08:12Z",
+        "updated_at": "2026-02-05T11:08:12Z"
+      }
+    ],
+    "total": 2
+  }
+}
+```
+
+---
+
+### Get List with Todos
+```bash
+curl -X GET http://localhost:8080/api/v1/lists/62ff611b-b155-47f2-9476-cd4a0cad400c \
+  -H "Authorization: Bearer [TOKEN]"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "62ff611b-b155-47f2-9476-cd4a0cad400c",
+    "user_id": "ee293d6f-a11d-4f80-8eea-efd01a047383",
+    "name": "Work Projects",
+    "created_at": "2026-02-05T11:08:12Z",
+    "updated_at": "2026-02-05T11:08:12Z",
+    "todos": [
+      {
+        "id": "fc34ab49-12f3-4536-bd43-3d62760786a3",
+        "title": "Review pull requests",
+        "description": "",
+        "completed": false,
+        "priority": "medium",
+        "created_at": "2026-02-05T11:08:46Z",
+        "updated_at": "2026-02-05T11:08:46Z",
+        "is_overdue": false
+      },
+      {
+        "id": "97c4fa49-925a-477a-b963-027b46788df7",
+        "title": "Complete API documentation",
+        "description": "",
+        "completed": false,
+        "priority": "high",
+        "created_at": "2026-02-05T11:08:44Z",
+        "updated_at": "2026-02-05T11:08:44Z",
+        "is_overdue": false
+      }
+    ]
+  }
+}
+```
+
+---
+
+### Update List (Rename)
+```bash
+curl -X PUT http://localhost:8080/api/v1/lists/62ff611b-b155-47f2-9476-cd4a0cad400c \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer [TOKEN]" \
+  -d '{
+    "name": "Work Projects (Updated)"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "62ff611b-b155-47f2-9476-cd4a0cad400c",
+    "user_id": "ee293d6f-a11d-4f80-8eea-efd01a047383",
+    "name": "Work Projects (Updated)",
+    "created_at": "2026-02-05T11:08:12Z",
+    "updated_at": "2026-02-05T16:39:17.301021756+05:30"
+  }
+}
+```
+
+---
+
+### Duplicate List (with all todos)
+```bash
+curl -X POST http://localhost:8080/api/v1/lists/62ff611b-b155-47f2-9476-cd4a0cad400c/duplicate \
+  -H "Authorization: Bearer [TOKEN]"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "e3f6185d-5766-40e5-a9a4-e27d5da8524c",
+    "user_id": "ee293d6f-a11d-4f80-8eea-efd01a047383",
+    "name": "Work Projects (Updated) (Copy)",
+    "created_at": "2026-02-05T16:39:19.726317947+05:30",
+    "updated_at": "2026-02-05T16:39:19.726317947+05:30",
+    "todos": [
+      {
+        "id": "47cf02cd-50cb-4e45-ba84-889ea2320987",
+        "title": "Review pull requests",
+        "description": "",
+        "completed": false,
+        "priority": "medium",
+        "created_at": "2026-02-05T16:39:19.730020476+05:30",
+        "updated_at": "2026-02-05T16:39:19.730020476+05:30",
+        "is_overdue": false
+      },
+      {
+        "id": "aa0c091e-f837-464e-bfca-33adb394faa9",
+        "title": "Complete API documentation",
+        "description": "",
+        "completed": false,
+        "priority": "high",
+        "created_at": "2026-02-05T16:39:19.73348959+05:30",
+        "updated_at": "2026-02-05T16:39:19.73348959+05:30",
+        "is_overdue": false
+      }
+    ]
+  }
+}
+```
+
+---
+
+### Delete List (permanently deletes list and all todos)
+```bash
+curl -X DELETE http://localhost:8080/api/v1/lists/03ed90f6-6998-41b3-9cd1-bd0b2dfc2db8 \
+  -H "Authorization: Bearer [TOKEN]"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "list deleted successfully"
+  }
+}
+```
+
+---
+
+## Move Todos (Bulk Operations)
+
+### Move todos from one list to another list
+```bash
+curl -X PATCH http://localhost:8080/api/v1/todos/move \
+  -H "Authorization: Bearer [TOKEN]" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "todo_ids": ["1f98fc7e-e0fe-4857-887a-c01724805298", "b4e392db-9398-4169-adb2-0fd557533bc6"],
+    "list_id": "f4c8c99e-541a-4aa6-840e-591f40c814a4"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "todos moved successfully"
+  }
+}
+```
+
+---
+
+### Move todos from list to global (uncategorize)
+```bash
+curl -X PATCH http://localhost:8080/api/v1/todos/move \
+  -H "Authorization: Bearer [TOKEN]" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "todo_ids": ["9fd5bbea-f08a-431f-9048-953d0de78a2e"],
+    "list_id": null
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "todos moved successfully"
+  }
+}
+```
+
+---
+
+### Move todos from global to a list (organize)
+```bash
+curl -X PATCH http://localhost:8080/api/v1/todos/move \
+  -H "Authorization: Bearer [TOKEN]" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "todo_ids": ["a865d78d-f1ca-49fd-9b7f-614f8dec1a69"],
+    "list_id": "edfa03f1-baf7-496d-8520-0d5b6f574049"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "todos moved successfully"
+  }
+}
+```

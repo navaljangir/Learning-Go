@@ -21,6 +21,16 @@ type Todo struct {
 	UpdatedAt   time.Time      `json:"updated_at"`
 	CompletedAt sql.NullTime   `json:"completed_at"`
 	DeletedAt   sql.NullTime   `json:"deleted_at"`
+	ListID      sql.NullString `json:"list_id"`
+}
+
+type TodoList struct {
+	ID        string       `json:"id"`
+	UserID    string       `json:"user_id"`
+	Name      string       `json:"name"`
+	CreatedAt time.Time    `json:"created_at"`
+	UpdatedAt time.Time    `json:"updated_at"`
+	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 
 type User struct {

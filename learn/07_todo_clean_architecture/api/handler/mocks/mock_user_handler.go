@@ -3,8 +3,8 @@ package mocks
 import "github.com/gin-gonic/gin"
 
 // MockUserHandler is a fake handler for testing
-// ⭐ This implements handler.UserHandlerInterface
-// ⭐ But it doesn't use real database or service!
+// This implements handler.UserHandlerInterface
+// But it doesn't use real database or service!
 type MockUserHandler struct {
 	GetProfileCalled    bool
 	UpdateProfileCalled bool
@@ -16,7 +16,7 @@ func NewMockUserHandler() *MockUserHandler {
 }
 
 // GetProfile implements UserHandlerInterface.GetProfile
-// ⭐ Returns fake data immediately (no database query)
+// Returns fake data immediately (no database query)
 func (m *MockUserHandler) GetProfile(c *gin.Context) {
 	m.GetProfileCalled = true
 
@@ -30,7 +30,7 @@ func (m *MockUserHandler) GetProfile(c *gin.Context) {
 }
 
 // UpdateProfile implements UserHandlerInterface.UpdateProfile
-// ⭐ Returns fake data immediately (no database update)
+// Returns fake data immediately (no database update)
 func (m *MockUserHandler) UpdateProfile(c *gin.Context) {
 	m.UpdateProfileCalled = true
 

@@ -20,6 +20,7 @@ const (
 type Todo struct {
 	ID          uuid.UUID
 	UserID      uuid.UUID
+	ListID      *uuid.UUID // Nullable: NULL = global/uncategorized todo
 	Title       string
 	Description string
 	Completed   bool

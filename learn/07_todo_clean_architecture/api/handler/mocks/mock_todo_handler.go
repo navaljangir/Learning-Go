@@ -3,19 +3,21 @@ package mocks
 import "github.com/gin-gonic/gin"
 
 // MockTodoHandler is a fake handler for testing
-// ⭐ This implements handler.TodoHandlerInterface
-// ⭐ But it doesn't use real database or service!
+// NOTE: This implements handler.TodoHandlerInterface
+// NOTE: But it doesn't use real database or service!
 type MockTodoHandler struct {
-	CreateCalled        bool
-	ListCalled          bool
-	GetByIDCalled       bool
-	UpdateCalled        bool
+	CreateCalled         bool
+	ListCalled           bool
+	GetByIDCalled        bool
+	UpdateCalled         bool
 	ToggleCompleteCalled bool
-	DeleteCalled        bool
+	DeleteCalled         bool
+	MoveTodosCalled      bool
 
 	// Track how many times methods were called
-	CreateCount int
-	ListCount   int
+	CreateCount    int
+	ListCount      int
+	MoveTodosCount int
 }
 
 // NewMockTodoHandler creates a new mock todo handler
@@ -24,7 +26,7 @@ func NewMockTodoHandler() *MockTodoHandler {
 }
 
 // Create implements TodoHandlerInterface.Create
-// ⭐ Returns fake todo data (no database insert)
+// NOTE: Returns fake todo data (no database insert)
 func (m *MockTodoHandler) Create(c *gin.Context) {
 	m.CreateCalled = true
 	m.CreateCount++
@@ -40,7 +42,7 @@ func (m *MockTodoHandler) Create(c *gin.Context) {
 }
 
 // List implements TodoHandlerInterface.List
-// ⭐ Returns fake todo list (no database query)
+// NOTE: Returns fake todo list (no database query)
 func (m *MockTodoHandler) List(c *gin.Context) {
 	m.ListCalled = true
 	m.ListCount++
@@ -68,7 +70,7 @@ func (m *MockTodoHandler) List(c *gin.Context) {
 }
 
 // GetByID implements TodoHandlerInterface.GetByID
-// ⭐ Returns fake single todo (no database query)
+// NOTE: Returns fake single todo (no database query)
 func (m *MockTodoHandler) GetByID(c *gin.Context) {
 	m.GetByIDCalled = true
 
@@ -81,7 +83,7 @@ func (m *MockTodoHandler) GetByID(c *gin.Context) {
 }
 
 // Update implements TodoHandlerInterface.Update
-// ⭐ Returns fake updated todo (no database update)
+// NOTE: Returns fake updated todo (no database update)
 func (m *MockTodoHandler) Update(c *gin.Context) {
 	m.UpdateCalled = true
 
@@ -94,7 +96,7 @@ func (m *MockTodoHandler) Update(c *gin.Context) {
 }
 
 // ToggleComplete implements TodoHandlerInterface.ToggleComplete
-// ⭐ Returns fake toggled todo (no database update)
+// NOTE: Returns fake toggled todo (no database update)
 func (m *MockTodoHandler) ToggleComplete(c *gin.Context) {
 	m.ToggleCompleteCalled = true
 
@@ -106,11 +108,22 @@ func (m *MockTodoHandler) ToggleComplete(c *gin.Context) {
 }
 
 // Delete implements TodoHandlerInterface.Delete
-// ⭐ Returns success (no database delete)
+// NOTE: Returns success (no database delete)
 func (m *MockTodoHandler) Delete(c *gin.Context) {
 	m.DeleteCalled = true
 
 	c.JSON(200, gin.H{
 		"message": "todo deleted successfully",
+	})
+}
+
+// MoveTodos implements TodoHandlerInterface.MoveTodos
+// NOTE: Returns success (no actual move operation)
+func (m *MockTodoHandler) MoveTodos(c *gin.Context) {
+	m.MoveTodosCalled = true
+	m.MoveTodosCount++
+
+	c.JSON(200, gin.H{
+		"message": "todos moved successfully",
 	})
 }

@@ -197,3 +197,31 @@ func (h *TodoHandler) Delete(c *gin.Context) {
 
 	utils.Success(c, gin.H{"message": "todo deleted successfully"})
 }
+
+// MoveTodos handles moving multiple todos to a list or to global
+// @Summary Move todos to a list or to global
+// @Description Move multiple todos to a specific list (list_id) or to global (list_id = null)
+// @Tags todos
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.MoveTodosRequest true "Move todos request"
+// @Success 200 {object} utils.Response
+// @Failure 400 {object} utils.Response
+// @Router /api/v1/todos/move [patch]
+func (h *TodoHandler) MoveTodos(c *gin.Context) {
+	userID := c.MustGet(constants.ContextUserID).(uuid.UUID)
+
+	var req dto.MoveTodosRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.BadRequest(c, err.Error())
+		return
+	}
+
+	if err := h.todoService.MoveTodos(c.Request.Context(), userID, req); err != nil {
+		utils.InternalError(c, err.Error())
+		return
+	}
+
+	utils.Success(c, gin.H{"message": "todos moved successfully"})
+}

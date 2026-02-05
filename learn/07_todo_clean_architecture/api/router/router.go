@@ -15,6 +15,7 @@ func SetupRouter(
 	authHandler handler.AuthHandlerInterface,
 	userHandler handler.UserHandlerInterface,
 	todoHandler handler.TodoHandlerInterface,
+	listHandler handler.TodoListHandlerInterface,
 	jwtUtil *utils.JWTUtil,
 ) *gin.Engine {
 	r := gin.New()
@@ -65,6 +66,18 @@ func SetupRouter(
 				todos.PUT("/:id", todoHandler.Update)
 				todos.PATCH("/:id/toggle", todoHandler.ToggleComplete)
 				todos.DELETE("/:id", todoHandler.Delete)
+				todos.PATCH("/move", todoHandler.MoveTodos)
+			}
+
+			// List routes
+			lists := authorized.Group("/lists")
+			{
+				lists.GET("", listHandler.List)
+				lists.POST("", listHandler.Create)
+				lists.GET("/:id", listHandler.GetByID)
+				lists.PUT("/:id", listHandler.Update)
+				lists.DELETE("/:id", listHandler.Delete)
+				lists.POST("/:id/duplicate", listHandler.Duplicate)
 			}
 		}
 	}

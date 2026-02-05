@@ -75,13 +75,14 @@ func (q *Queries) CountTodosFiltered(ctx context.Context, arg CountTodosFiltered
 }
 
 const createTodo = `-- name: CreateTodo :exec
-INSERT INTO todos (id, user_id, title, description, completed, priority, due_date, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO todos (id, user_id, list_id, title, description, completed, priority, due_date, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 type CreateTodoParams struct {
 	ID          string         `json:"id"`
 	UserID      string         `json:"user_id"`
+	ListID      sql.NullString `json:"list_id"`
 	Title       string         `json:"title"`
 	Description sql.NullString `json:"description"`
 	Completed   bool           `json:"completed"`
@@ -95,6 +96,7 @@ func (q *Queries) CreateTodo(ctx context.Context, arg CreateTodoParams) error {
 	_, err := q.db.ExecContext(ctx, createTodo,
 		arg.ID,
 		arg.UserID,
+		arg.ListID,
 		arg.Title,
 		arg.Description,
 		arg.Completed,
@@ -107,17 +109,33 @@ func (q *Queries) CreateTodo(ctx context.Context, arg CreateTodoParams) error {
 }
 
 const getTodoByID = `-- name: GetTodoByID :one
-SELECT id, user_id, title, description, completed, priority, due_date, created_at, updated_at, completed_at, deleted_at
+SELECT id, user_id, list_id, title, description, completed, priority, due_date, created_at, updated_at, completed_at, deleted_at
 FROM todos
 WHERE id = ? AND deleted_at IS NULL
 `
 
-func (q *Queries) GetTodoByID(ctx context.Context, id string) (Todo, error) {
+type GetTodoByIDRow struct {
+	ID          string         `json:"id"`
+	UserID      string         `json:"user_id"`
+	ListID      sql.NullString `json:"list_id"`
+	Title       string         `json:"title"`
+	Description sql.NullString `json:"description"`
+	Completed   bool           `json:"completed"`
+	Priority    sql.NullString `json:"priority"`
+	DueDate     sql.NullTime   `json:"due_date"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	CompletedAt sql.NullTime   `json:"completed_at"`
+	DeletedAt   sql.NullTime   `json:"deleted_at"`
+}
+
+func (q *Queries) GetTodoByID(ctx context.Context, id string) (GetTodoByIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getTodoByID, id)
-	var i Todo
+	var i GetTodoByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
+		&i.ListID,
 		&i.Title,
 		&i.Description,
 		&i.Completed,
@@ -132,7 +150,7 @@ func (q *Queries) GetTodoByID(ctx context.Context, id string) (Todo, error) {
 }
 
 const getTodosByUserID = `-- name: GetTodosByUserID :many
-SELECT id, user_id, title, description, completed, priority, due_date, created_at, updated_at, completed_at, deleted_at
+SELECT id, user_id, list_id, title, description, completed, priority, due_date, created_at, updated_at, completed_at, deleted_at
 FROM todos
 WHERE user_id = ? AND deleted_at IS NULL
 ORDER BY created_at DESC
@@ -145,18 +163,34 @@ type GetTodosByUserIDParams struct {
 	Offset int32  `json:"offset"`
 }
 
-func (q *Queries) GetTodosByUserID(ctx context.Context, arg GetTodosByUserIDParams) ([]Todo, error) {
+type GetTodosByUserIDRow struct {
+	ID          string         `json:"id"`
+	UserID      string         `json:"user_id"`
+	ListID      sql.NullString `json:"list_id"`
+	Title       string         `json:"title"`
+	Description sql.NullString `json:"description"`
+	Completed   bool           `json:"completed"`
+	Priority    sql.NullString `json:"priority"`
+	DueDate     sql.NullTime   `json:"due_date"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	CompletedAt sql.NullTime   `json:"completed_at"`
+	DeletedAt   sql.NullTime   `json:"deleted_at"`
+}
+
+func (q *Queries) GetTodosByUserID(ctx context.Context, arg GetTodosByUserIDParams) ([]GetTodosByUserIDRow, error) {
 	rows, err := q.db.QueryContext(ctx, getTodosByUserID, arg.UserID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Todo{}
+	items := []GetTodosByUserIDRow{}
 	for rows.Next() {
-		var i Todo
+		var i GetTodosByUserIDRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
+			&i.ListID,
 			&i.Title,
 			&i.Description,
 			&i.Completed,
@@ -181,7 +215,7 @@ func (q *Queries) GetTodosByUserID(ctx context.Context, arg GetTodosByUserIDPara
 }
 
 const getTodosFiltered = `-- name: GetTodosFiltered :many
-SELECT id, user_id, title, description, completed, priority, due_date, created_at, updated_at, completed_at, deleted_at
+SELECT id, user_id, list_id, title, description, completed, priority, due_date, created_at, updated_at, completed_at, deleted_at
 FROM todos
 WHERE deleted_at IS NULL
   AND (? IS NULL OR user_id = ?)
@@ -203,7 +237,22 @@ type GetTodosFilteredParams struct {
 	Offset      int32          `json:"offset"`
 }
 
-func (q *Queries) GetTodosFiltered(ctx context.Context, arg GetTodosFilteredParams) ([]Todo, error) {
+type GetTodosFilteredRow struct {
+	ID          string         `json:"id"`
+	UserID      string         `json:"user_id"`
+	ListID      sql.NullString `json:"list_id"`
+	Title       string         `json:"title"`
+	Description sql.NullString `json:"description"`
+	Completed   bool           `json:"completed"`
+	Priority    sql.NullString `json:"priority"`
+	DueDate     sql.NullTime   `json:"due_date"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	CompletedAt sql.NullTime   `json:"completed_at"`
+	DeletedAt   sql.NullTime   `json:"deleted_at"`
+}
+
+func (q *Queries) GetTodosFiltered(ctx context.Context, arg GetTodosFilteredParams) ([]GetTodosFilteredRow, error) {
 	rows, err := q.db.QueryContext(ctx, getTodosFiltered,
 		arg.UserID,
 		arg.UserID,
@@ -222,12 +271,13 @@ func (q *Queries) GetTodosFiltered(ctx context.Context, arg GetTodosFilteredPara
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Todo{}
+	items := []GetTodosFilteredRow{}
 	for rows.Next() {
-		var i Todo
+		var i GetTodosFilteredRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
+			&i.ListID,
 			&i.Title,
 			&i.Description,
 			&i.Completed,
@@ -264,7 +314,7 @@ func (q *Queries) SoftDeleteTodo(ctx context.Context, id string) error {
 
 const updateTodo = `-- name: UpdateTodo :exec
 UPDATE todos
-SET title = ?, description = ?, completed = ?, priority = ?, due_date = ?, updated_at = ?, completed_at = ?
+SET title = ?, description = ?, completed = ?, priority = ?, due_date = ?, updated_at = ?, completed_at = ?, list_id = ?
 WHERE id = ? AND deleted_at IS NULL
 `
 
@@ -276,6 +326,7 @@ type UpdateTodoParams struct {
 	DueDate     sql.NullTime   `json:"due_date"`
 	UpdatedAt   time.Time      `json:"updated_at"`
 	CompletedAt sql.NullTime   `json:"completed_at"`
+	ListID      sql.NullString `json:"list_id"`
 	ID          string         `json:"id"`
 }
 
@@ -288,6 +339,7 @@ func (q *Queries) UpdateTodo(ctx context.Context, arg UpdateTodoParams) error {
 		arg.DueDate,
 		arg.UpdatedAt,
 		arg.CompletedAt,
+		arg.ListID,
 		arg.ID,
 	)
 	return err

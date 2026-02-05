@@ -23,7 +23,6 @@ func NewMockAuthHandler() *MockAuthHandler {
 }
 
 // Register implements AuthHandlerInterface.Register
-// This is a FAKE implementation for testing
 func (m *MockAuthHandler) Register(c *gin.Context) {
 	m.RegisterCalled = true
 	m.RegisterCount++

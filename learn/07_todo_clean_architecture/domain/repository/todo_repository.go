@@ -42,4 +42,7 @@ type TodoRepository interface {
 
 	// CountByUser returns the total count of todos for a specific user
 	CountByUser(ctx context.Context, userID uuid.UUID) (int64, error)
+
+	// UpdateListID updates the list_id for multiple todos (use nil for moving to global)
+	UpdateListID(ctx context.Context, todoIDs []uuid.UUID, listID *uuid.UUID, userID uuid.UUID) error
 }

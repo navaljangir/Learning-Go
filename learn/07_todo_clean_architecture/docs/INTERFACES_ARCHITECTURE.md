@@ -210,7 +210,7 @@ The dependency flow is correct:
 
 ## Common Mistakes
 
-### ❌ Pointer to Interface
+### [BAD] Pointer to Interface
 ```go
 type TodoHandler struct {
     todoService *service.TodoService  // WRONG!
@@ -219,7 +219,7 @@ type TodoHandler struct {
 
 This is a "pointer to an interface" which is almost never what you want. Interfaces are already reference types internally.
 
-### ❌ Using Concrete Types in Handlers
+### [BAD] Using Concrete Types in Handlers
 ```go
 import "todo_app/internal/service"
 
@@ -230,7 +230,7 @@ type TodoHandler struct {
 
 This defeats the purpose of interfaces - now you can't swap implementations.
 
-### ✅ Correct Pattern
+### ** Correct Pattern
 ```go
 import "todo_app/domain/service"
 
