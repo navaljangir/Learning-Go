@@ -33,6 +33,29 @@ func (s *TodoServiceImpl) Create(ctx context.Context, userID uuid.UUID, req dto.
 	// Create todo entity
 	todo := entity.NewTodo(userID, req.Title, req.Description, priority, req.DueDate)
 
+	// Handle optional completion status
+	if req.Completed {
+		// If creating as completed, set completed status
+		if req.CompletedAt != nil {
+			// Use provided completion date
+			todo.Completed = true
+			todo.CompletedAt = req.CompletedAt
+		} else {
+			// Use current time as completion date
+			todo.MarkAsCompleted()
+		}
+	}
+
+	// Handle optional list assignment
+	if req.ListID != nil {
+		listID, err := uuid.Parse(*req.ListID)
+		if err != nil {
+			return nil, errors.New("invalid list ID format")
+		}
+		todo.ListID = &listID
+		// TODO: Verify list exists and belongs to user
+	}
+
 	// Save to database
 	if err := s.todoRepo.Create(ctx, todo); err != nil {
 		return nil, err
@@ -126,6 +149,25 @@ func (s *TodoServiceImpl) Update(ctx context.Context, todoID, userID uuid.UUID, 
 	if req.DueDate != nil {
 		todo.DueDate = req.DueDate
 	}
+
+	// Handle completion status update
+	if req.Completed != nil {
+		if *req.Completed {
+			// Mark as completed
+			if req.CompletedAt != nil {
+				// Use provided completion date
+				todo.Completed = true
+				todo.CompletedAt = req.CompletedAt
+			} else {
+				// Use current time
+				todo.MarkAsCompleted()
+			}
+		} else {
+			// Mark as incomplete
+			todo.MarkAsIncomplete()
+		}
+	}
+
 	todo.UpdatedAt = time.Now()
 
 	// Save changes

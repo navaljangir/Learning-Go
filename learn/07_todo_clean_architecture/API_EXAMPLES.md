@@ -13,9 +13,16 @@ curl -X POST http://localhost:8080/api/v1/auth/register \
   -d '{
     "username": "testuser1",
     "email": "test1@example.com",
-    "password": "password123"
+    "password": "SecurePass123!",
+    "full_name": "Test User"
   }'
 ```
+
+**Validation Rules:**
+- `username`: 3-30 chars, starts with letter, only letters/numbers/underscores, no spaces
+- `email`: valid email format, max 255 chars
+- `password`: 8-72 chars, must contain uppercase, lowercase, number, and special character
+- `full_name`: 2-100 chars (required)
 
 **Response:**
 ```json
@@ -27,7 +34,7 @@ curl -X POST http://localhost:8080/api/v1/auth/register \
       "id": "eabe56d5-6a1c-48da-8351-b0129d9813ec",
       "username": "testuser1",
       "email": "test1@example.com",
-      "full_name": "",
+      "full_name": "Test User",
       "created_at": "2026-02-05T16:37:42.188692504+05:30",
       "updated_at": "2026-02-05T16:37:42.188692504+05:30"
     },
@@ -44,7 +51,7 @@ curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "username": "testuser1",
-    "password": "password123"
+    "password": "SecurePass123!"
   }'
 ```
 
@@ -58,7 +65,7 @@ curl -X POST http://localhost:8080/api/v1/auth/login \
       "id": "eabe56d5-6a1c-48da-8351-b0129d9813ec",
       "username": "testuser1",
       "email": "test1@example.com",
-      "full_name": "",
+      "full_name": "Test User",
       "created_at": "2026-02-05T11:07:42Z",
       "updated_at": "2026-02-05T11:07:42Z"
     },
@@ -85,7 +92,7 @@ curl -X GET http://localhost:8080/api/v1/users/profile \
     "id": "eabe56d5-6a1c-48da-8351-b0129d9813ec",
     "username": "testuser1",
     "email": "test1@example.com",
-    "full_name": "",
+    "full_name": "Test User",
     "created_at": "2026-02-05T11:07:42Z",
     "updated_at": "2026-02-05T11:07:42Z"
   }
@@ -96,14 +103,13 @@ curl -X GET http://localhost:8080/api/v1/users/profile \
 
 ## Todo Endpoints
 
-### Create Todo (Global - no list)
+### Create Todo - Minimal (Only Required Fields)
 ```bash
 curl -X POST http://localhost:8080/api/v1/todos \
   -H "Authorization: Bearer [TOKEN]" \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Buy groceries",
-    "description": "Milk, eggs, bread",
     "priority": "medium"
   }'
 ```
@@ -115,11 +121,82 @@ curl -X POST http://localhost:8080/api/v1/todos \
   "data": {
     "id": "2a97f648-c496-4703-90ef-b094ac34c5ba",
     "title": "Buy groceries",
-    "description": "Milk, eggs, bread",
+    "description": "",
     "completed": false,
     "priority": "medium",
     "created_at": "2026-02-05T16:38:12.912501402+05:30",
     "updated_at": "2026-02-05T16:38:12.912501402+05:30",
+    "is_overdue": false
+  }
+}
+```
+
+---
+
+### Create Todo - With All Optional Fields (Including List)
+```bash
+curl -X POST http://localhost:8080/api/v1/todos \
+  -H "Authorization: Bearer [TOKEN]" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Complete project documentation",
+    "description": "Write API docs and user guide",
+    "priority": "high",
+    "due_date": "2024-01-20T17:00:00Z",
+    "completed": false,
+    "list_id": "62ff611b-b155-47f2-9476-cd4a0cad400c"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "3b08f759-d507-5814-a1f0-c205bd45d6cb",
+    "list_id": "62ff611b-b155-47f2-9476-cd4a0cad400c",
+    "list_name": "Work Projects",
+    "title": "Complete project documentation",
+    "description": "Write API docs and user guide",
+    "completed": false,
+    "priority": "high",
+    "due_date": "2024-01-20T17:00:00Z",
+    "created_at": "2026-02-05T16:38:12.912501402+05:30",
+    "updated_at": "2026-02-05T16:38:12.912501402+05:30",
+    "is_overdue": true
+  }
+}
+```
+
+---
+
+### Create Todo - Already Completed (Import from another system)
+```bash
+curl -X POST http://localhost:8080/api/v1/todos \
+  -H "Authorization: Bearer [TOKEN]" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Setup development environment",
+    "description": "Install Go, MySQL, and configure project",
+    "priority": "high",
+    "completed": true,
+    "completed_at": "2024-01-10T14:30:00Z"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "4c19g860-e618-6925-b2g1-d316ce56e7dc",
+    "title": "Setup development environment",
+    "description": "Install Go, MySQL, and configure project",
+    "completed": true,
+    "priority": "high",
+    "created_at": "2026-02-05T16:38:12.912501402+05:30",
+    "updated_at": "2026-02-05T16:38:12.912501402+05:30",
+    "completed_at": "2024-01-10T14:30:00Z",
     "is_overdue": false
   }
 }
@@ -226,7 +303,7 @@ curl -X GET http://localhost:8080/api/v1/todos/2a97f648-c496-4703-90ef-b094ac34c
 
 ---
 
-### Update Todo
+### Update Todo - Partial Update (Only Title)
 ```bash
 curl -X PUT http://localhost:8080/api/v1/todos/2a97f648-c496-4703-90ef-b094ac34c5ba \
   -H "Content-Type: application/json" \
@@ -249,6 +326,101 @@ curl -X PUT http://localhost:8080/api/v1/todos/2a97f648-c496-4703-90ef-b094ac34c
     "created_at": "2026-02-05T11:08:13Z",
     "updated_at": "2026-02-05T16:38:38.342140887+05:30",
     "is_overdue": false
+  }
+}
+```
+
+---
+
+### Update Todo - Multiple Fields (with due_date)
+```bash
+curl -X PUT http://localhost:8080/api/v1/todos/2a97f648-c496-4703-90ef-b094ac34c5ba \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer [TOKEN]" \
+  -d '{
+    "title": "Buy groceries, fruits, and vegetables",
+    "description": "Milk, eggs, bread, apples, carrots",
+    "priority": "high",
+    "due_date": "2024-01-16T18:00:00Z"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "2a97f648-c496-4703-90ef-b094ac34c5ba",
+    "title": "Buy groceries, fruits, and vegetables",
+    "description": "Milk, eggs, bread, apples, carrots",
+    "completed": false,
+    "priority": "high",
+    "due_date": "2024-01-16T18:00:00Z",
+    "created_at": "2026-02-05T11:08:13Z",
+    "updated_at": "2026-02-05T16:40:00.342140887+05:30",
+    "is_overdue": true
+  }
+}
+```
+
+---
+
+### Update Todo - Mark as Completed with Custom Date
+```bash
+curl -X PUT http://localhost:8080/api/v1/todos/2a97f648-c496-4703-90ef-b094ac34c5ba \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer [TOKEN]" \
+  -d '{
+    "completed": true,
+    "completed_at": "2024-01-15T12:00:00Z"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "2a97f648-c496-4703-90ef-b094ac34c5ba",
+    "title": "Buy groceries, fruits, and vegetables",
+    "description": "Milk, eggs, bread, apples, carrots",
+    "completed": true,
+    "priority": "high",
+    "due_date": "2024-01-16T18:00:00Z",
+    "created_at": "2026-02-05T11:08:13Z",
+    "updated_at": "2026-02-05T16:41:00.342140887+05:30",
+    "completed_at": "2024-01-15T12:00:00Z",
+    "is_overdue": false
+  }
+}
+```
+
+---
+
+### Update Todo - Mark as Incomplete
+```bash
+curl -X PUT http://localhost:8080/api/v1/todos/2a97f648-c496-4703-90ef-b094ac34c5ba \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer [TOKEN]" \
+  -d '{
+    "completed": false
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "2a97f648-c496-4703-90ef-b094ac34c5ba",
+    "title": "Buy groceries, fruits, and vegetables",
+    "description": "Milk, eggs, bread, apples, carrots",
+    "completed": false,
+    "priority": "high",
+    "due_date": "2024-01-16T18:00:00Z",
+    "created_at": "2026-02-05T11:08:13Z",
+    "updated_at": "2026-02-05T16:42:00.342140887+05:30",
+    "is_overdue": true
   }
 }
 ```
@@ -561,3 +733,54 @@ curl -X PATCH http://localhost:8080/api/v1/todos/move \
   }
 }
 ```
+
+---
+
+## Field Reference
+
+### CreateTodoRequest Fields
+
+| Field | Type | Required | Description | Example |
+|-------|------|----------|-------------|---------|
+| `title` | string | **Yes** | Todo title (1-255 chars) | `"Buy groceries"` |
+| `description` | string | No | Detailed description (max 2000 chars) | `"Need milk and eggs"` |
+| `priority` | string | **Yes** | Priority: `low`, `medium`, `high`, `urgent` | `"high"` |
+| `due_date` | ISO 8601 | No | When todo is due | `"2024-01-20T17:00:00Z"` |
+| `completed` | boolean | No | Create as completed (default: false) | `true` |
+| `completed_at` | ISO 8601 | No | Completion date (only if completed=true) | `"2024-01-15T12:00:00Z"` |
+| `list_id` | UUID string | No | Assign to a list (null = global) | `"550e8400-e29b-..."` |
+
+### UpdateTodoRequest Fields
+
+All fields are **optional** - only provided fields will be updated.
+
+| Field | Type | Required | Description | Example |
+|-------|------|----------|-------------|---------|
+| `title` | string | No | Update title (1-255 chars) | `"Buy groceries"` |
+| `description` | string | No | Update description (max 2000 chars) | `"Need milk and eggs"` |
+| `priority` | string | No | Update priority: `low`, `medium`, `high`, `urgent` | `"high"` |
+| `due_date` | ISO 8601 | No | Update due date (null = remove) | `"2024-01-20T17:00:00Z"` |
+| `completed` | boolean | No | Update completion status | `true` |
+| `completed_at` | ISO 8601 | No | Update completion date | `"2024-01-15T12:00:00Z"` |
+
+### Priority Values
+
+- `low` - Low priority task
+- `medium` - Medium priority task (default)
+- `high` - High priority task
+- `urgent` - Urgent/critical task
+
+### Date Format
+
+All dates must be in **ISO 8601** format with timezone:
+- `2024-01-20T17:00:00Z` (UTC)
+- `2024-01-20T17:00:00+05:30` (with timezone offset)
+
+### Notes
+
+1. **Partial Updates**: PUT endpoints only update fields you provide
+2. **Null Values**: Use `null` (not empty string `""`) for optional fields
+3. **Completed Logic**:
+   - If `completed=true` without `completed_at`, current time is used
+   - If `completed=false`, `completed_at` is cleared
+4. **Overdue Calculation**: A todo is overdue if `due_date` is in the past AND `completed=false`

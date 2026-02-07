@@ -3,11 +3,12 @@ package sqlc_impl
 import (
 	"context"
 	"database/sql"
-	"errors"
+	"fmt"
 	"time"
 	"todo_app/domain/entity"
 	"todo_app/domain/repository"
 	"todo_app/internal/repository/sqlc"
+	"todo_app/pkg/utils"
 
 	"github.com/google/uuid"
 )
@@ -28,7 +29,7 @@ func NewTodoRepository(db *sql.DB) repository.TodoRepository {
 // convertTodoRowToEntity is a helper to convert any todo row type to entity
 func convertTodoRowToEntity(id, userID string, listID sql.NullString, title string, description sql.NullString,
 	completed bool, priority sql.NullString, dueDate sql.NullTime, createdAt, updatedAt time.Time,
-	completedAt, deletedAt sql.NullTime) *entity.Todo {
+	completedAt, deletedAt sql.NullTime, listName sql.NullString) *entity.Todo {
 
 	todoID, _ := uuid.Parse(id)
 	todoUserID, _ := uuid.Parse(userID)
@@ -49,10 +50,16 @@ func convertTodoRowToEntity(id, userID string, listID sql.NullString, title stri
 		prio = entity.Priority(priority.String)
 	}
 
+	listNameStr := ""
+	if listName.Valid {
+		listNameStr = listName.String
+	}
+
 	return &entity.Todo{
 		ID:          todoID,
 		UserID:      todoUserID,
 		ListID:      todoListID,
+		ListName:    listNameStr,
 		Title:       title,
 		Description: desc,
 		Completed:   completed,
@@ -70,7 +77,7 @@ func todoRowByIDToEntity(t sqlc.GetTodoByIDRow) *entity.Todo {
 	return convertTodoRowToEntity(
 		t.ID, t.UserID, t.ListID, t.Title, t.Description,
 		t.Completed, t.Priority, t.DueDate, t.CreatedAt, t.UpdatedAt,
-		t.CompletedAt, t.DeletedAt,
+		t.CompletedAt, t.DeletedAt, t.ListName,
 	)
 }
 
@@ -79,16 +86,17 @@ func todoRowByUserIDToEntity(t sqlc.GetTodosByUserIDRow) *entity.Todo {
 	return convertTodoRowToEntity(
 		t.ID, t.UserID, t.ListID, t.Title, t.Description,
 		t.Completed, t.Priority, t.DueDate, t.CreatedAt, t.UpdatedAt,
-		t.CompletedAt, t.DeletedAt,
+		t.CompletedAt, t.DeletedAt, t.ListName,
 	)
 }
 
 // todoRowFilteredToEntity converts sqlc.GetTodosFilteredRow to entity.Todo
 func todoRowFilteredToEntity(t sqlc.GetTodosFilteredRow) *entity.Todo {
+	// GetTodosFiltered doesn't have list_name, pass empty
 	return convertTodoRowToEntity(
 		t.ID, t.UserID, t.ListID, t.Title, t.Description,
 		t.Completed, t.Priority, t.DueDate, t.CreatedAt, t.UpdatedAt,
-		t.CompletedAt, t.DeletedAt,
+		t.CompletedAt, t.DeletedAt, sql.NullString{},
 	)
 }
 
@@ -116,7 +124,7 @@ func (r *todoRepository) Create(ctx context.Context, todo *entity.Todo) error {
 func (r *todoRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.Todo, error) {
 	todo, err := r.queries.GetTodoByID(ctx, id.String())
 	if err == sql.ErrNoRows {
-		return nil, errors.New("todo not found")
+		return nil, fmt.Errorf("%w: todo", utils.ErrNotFound)
 	}
 	if err != nil {
 		return nil, err
@@ -139,6 +147,31 @@ func (r *todoRepository) FindByUserID(ctx context.Context, userID uuid.UUID, lim
 	result := make([]*entity.Todo, len(todos))
 	for i, t := range todos {
 		result[i] = todoRowByUserIDToEntity(t)
+	}
+
+	return result, nil
+}
+
+func (r *todoRepository) FindByListID(ctx context.Context, listID uuid.UUID) ([]*entity.Todo, error) {
+	// Convert UUID to sql.NullString
+	listIDParam := sql.NullString{
+		String: listID.String(),
+		Valid:  true,
+	}
+
+	rows, err := r.queries.GetTodosByListID(ctx, listIDParam)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*entity.Todo, len(rows))
+	for i, row := range rows {
+		// GetTodosByListID doesn't have list_name in the query
+		result[i] = convertTodoRowToEntity(
+			row.ID, row.UserID, row.ListID, row.Title, row.Description,
+			row.Completed, row.Priority, row.DueDate, row.CreatedAt, row.UpdatedAt,
+			row.CompletedAt, row.DeletedAt, sql.NullString{},
+		)
 	}
 
 	return result, nil

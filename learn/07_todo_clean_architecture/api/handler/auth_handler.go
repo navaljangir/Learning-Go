@@ -4,6 +4,7 @@ import (
 	"todo_app/domain/service"
 	"todo_app/internal/dto"
 	"todo_app/pkg/utils"
+	"todo_app/pkg/validator"
 
 	"github.com/gin-gonic/gin"
 )
@@ -32,6 +33,15 @@ func NewAuthHandler(userService service.UserService) AuthHandlerInterface {
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req dto.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		// Get user-friendly validation errors
+		validationErrors := validator.GetValidationErrors(err)
+		if len(validationErrors) > 0 {
+			c.JSON(400, gin.H{
+				"error":  "Validation failed",
+				"fields": validationErrors,
+			})
+			return
+		}
 		utils.BadRequest(c, err.Error())
 		return
 	}
@@ -57,6 +67,15 @@ func (h *AuthHandler) Register(c *gin.Context) {
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req dto.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		// Get user-friendly validation errors
+		validationErrors := validator.GetValidationErrors(err)
+		if len(validationErrors) > 0 {
+			c.JSON(400, gin.H{
+				"error":  "Validation failed",
+				"fields": validationErrors,
+			})
+			return
+		}
 		utils.BadRequest(c, err.Error())
 		return
 	}

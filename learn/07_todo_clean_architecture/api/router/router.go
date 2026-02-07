@@ -20,12 +20,12 @@ func SetupRouter(
 ) *gin.Engine {
 	r := gin.New()
 
-	// Global middleware
+	// Global middleware (order matters!)
 	r.Use(gin.Recovery())
-	r.Use(middleware.ErrorRecoveryMiddleware())
 	r.Use(middleware.RequestIDMiddleware())
 	r.Use(middleware.LoggerMiddleware())
 	r.Use(middleware.CORSMiddleware())
+	r.Use(middleware.ErrorHandlerMiddleware()) // Must be last!
 
 	// Health check endpoint (public)
 	r.GET("/health", func(c *gin.Context) {

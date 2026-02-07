@@ -8,20 +8,26 @@ import (
 )
 
 // CreateTodoRequest represents a request to create a new todo
+// All fields are optional except title and priority
 type CreateTodoRequest struct {
 	Title       string     `json:"title" binding:"required,min=1,max=255"`
 	Description string     `json:"description" binding:"max=2000"`
 	Priority    string     `json:"priority" binding:"required,oneof=low medium high urgent"`
-	DueDate     *time.Time `json:"due_date"`
+	DueDate     *time.Time `json:"due_date"`                         // Optional: set due date
+	Completed   bool       `json:"completed"`                        // Optional: create as completed (default: false)
+	CompletedAt *time.Time `json:"completed_at"`                     // Optional: set completion date (only if completed=true)
 	ListID      *string    `json:"list_id" binding:"omitempty,uuid"` // Optional: assign to list
 }
 
 // UpdateTodoRequest represents a request to update a todo
+// All fields are optional - only provided fields will be updated
 type UpdateTodoRequest struct {
 	Title       *string    `json:"title" binding:"omitempty,min=1,max=255"`
 	Description *string    `json:"description" binding:"omitempty,max=2000"`
 	Priority    *string    `json:"priority" binding:"omitempty,oneof=low medium high urgent"`
-	DueDate     *time.Time `json:"due_date"`
+	DueDate     *time.Time `json:"due_date"`     // null = remove due date
+	Completed   *bool      `json:"completed"`    // Update completion status
+	CompletedAt *time.Time `json:"completed_at"` // Update completion date
 }
 
 // MoveTodosRequest represents a request to move todos between lists or to global
@@ -33,7 +39,8 @@ type MoveTodosRequest struct {
 // TodoResponse represents a todo in API responses
 type TodoResponse struct {
 	ID          uuid.UUID  `json:"id"`
-	ListID      *uuid.UUID `json:"list_id,omitempty"` // null = global todo
+	ListID      *uuid.UUID `json:"list_id,omitempty"`   // null = global todo
+	ListName    string     `json:"list_name,omitempty"` // Name of the list (empty if global)
 	Title       string     `json:"title"`
 	Description string     `json:"description"`
 	Completed   bool       `json:"completed"`
@@ -67,6 +74,7 @@ func TodoToResponse(todo *entity.Todo) TodoResponse {
 	return TodoResponse{
 		ID:          todo.ID,
 		ListID:      todo.ListID,
+		ListName:    todo.ListName,
 		Title:       todo.Title,
 		Description: todo.Description,
 		Completed:   todo.Completed,

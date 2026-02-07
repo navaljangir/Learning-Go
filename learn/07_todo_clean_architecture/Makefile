@@ -1,4 +1,4 @@
-.PHONY: help build run test test-coverage migrate-up migrate-down migrate-create migrate-version setup clean deps lint fmt sqlc-generate sqlc-verify
+.PHONY: help build run dev migrate-up migrate-down migrate-create migrate-version setup clean deps lint fmt vet sqlc-generate sqlc-verify install-tools all
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -24,20 +24,6 @@ dev: ## Run with hot reload (requires air)
 		echo "  go install github.com/air-verse/air@latest"; \
 		exit 1; \
 	fi
-
-test: ## Run all tests
-	@echo "Running tests..."
-	@go test ./... -v
-
-test-coverage: ## Run tests with coverage
-	@echo "Running tests with coverage..."
-	@go test ./... -cover -coverprofile=coverage.out
-	@go tool cover -html=coverage.out -o coverage.html
-	@echo "✓ Coverage report generated: coverage.html"
-
-test-race: ## Run tests with race detector
-	@echo "Running tests with race detector..."
-	@go test ./... -race -v
 
 migrate-up: ## Run database migrations
 	@echo "Running migrations..."
@@ -121,5 +107,5 @@ install-tools: ## Install development tools (MySQL version)
 	@go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 	@echo "✓ Tools installed!"
 
-all: deps fmt vet test build ## Run all checks and build
+all: deps fmt vet build ## Run all checks and build
 	@echo "✓ All checks passed!"

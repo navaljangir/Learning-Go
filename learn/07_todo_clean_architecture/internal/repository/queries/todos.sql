@@ -3,15 +3,43 @@ INSERT INTO todos (id, user_id, list_id, title, description, completed, priority
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- name: GetTodoByID :one
-SELECT id, user_id, list_id, title, description, completed, priority, due_date, created_at, updated_at, completed_at, deleted_at
-FROM todos
-WHERE id = ? AND deleted_at IS NULL;
+SELECT
+    t.id,
+    t.user_id,
+    t.list_id,
+    t.title,
+    t.description,
+    t.completed,
+    t.priority,
+    t.due_date,
+    t.created_at,
+    t.updated_at,
+    t.completed_at,
+    t.deleted_at,
+    l.name as list_name
+FROM todos t
+LEFT JOIN todo_lists l ON t.list_id = l.id AND l.deleted_at IS NULL
+WHERE t.id = ? AND t.deleted_at IS NULL;
 
 -- name: GetTodosByUserID :many
-SELECT id, user_id, list_id, title, description, completed, priority, due_date, created_at, updated_at, completed_at, deleted_at
-FROM todos
-WHERE user_id = ? AND deleted_at IS NULL
-ORDER BY created_at DESC
+SELECT
+    t.id,
+    t.user_id,
+    t.list_id,
+    t.title,
+    t.description,
+    t.completed,
+    t.priority,
+    t.due_date,
+    t.created_at,
+    t.updated_at,
+    t.completed_at,
+    t.deleted_at,
+    l.name as list_name
+FROM todos t
+LEFT JOIN todo_lists l ON t.list_id = l.id AND l.deleted_at IS NULL
+WHERE t.user_id = ? AND t.deleted_at IS NULL
+ORDER BY t.created_at DESC
 LIMIT ? OFFSET ?;
 
 -- name: UpdateTodo :exec

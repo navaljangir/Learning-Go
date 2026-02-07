@@ -28,6 +28,9 @@ type TodoRepository interface {
 	// FindByUserID retrieves all todos for a specific user with pagination
 	FindByUserID(ctx context.Context, userID uuid.UUID, limit, offset int) ([]*entity.Todo, error)
 
+	// FindByListID retrieves all todos in a specific list
+	FindByListID(ctx context.Context, listID uuid.UUID) ([]*entity.Todo, error)
+
 	// FindWithFilters retrieves todos based on filter criteria with pagination
 	FindWithFilters(ctx context.Context, filter TodoFilter, limit, offset int) ([]*entity.Todo, error)
 

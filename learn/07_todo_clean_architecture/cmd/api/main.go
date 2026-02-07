@@ -17,8 +17,11 @@ import (
 	"todo_app/internal/repository/sqlc_impl"
 	serviceImpl "todo_app/internal/service"
 	"todo_app/pkg/utils"
+	customValidator "todo_app/pkg/validator"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 )
 
@@ -38,6 +41,9 @@ func main() {
 
 	// Configure Gin mode (production = no debug logs)
 	configureGinMode(cfg.Server.Environment)
+
+	// Register custom validators
+	registerCustomValidators()
 
 	// Initialize database connection (Infrastructure layer)
 	db := initDatabase(cfg)
@@ -234,4 +240,15 @@ func repeat(s string, count int) string {
 		result += s
 	}
 	return result
+}
+
+// registerCustomValidators registers custom validation rules with Gin's validator
+func registerCustomValidators() {
+	// Get Gin's validator instance (it uses go-playground/validator under the hood)
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		if err := customValidator.RegisterCustomValidators(v); err != nil {
+			log.Fatalf("Failed to register custom validators: %v", err)
+		}
+		log.Println("[OK] Custom validators registered (nospaces, alphanumunder, strongpassword)")
+	}
 }

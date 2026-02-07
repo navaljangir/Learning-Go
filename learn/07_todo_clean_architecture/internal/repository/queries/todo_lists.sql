@@ -31,5 +31,5 @@ WHERE user_id = ? AND deleted_at IS NULL;
 -- name: GetTodosByListID :many
 SELECT id, user_id, list_id, title, description, completed, priority, due_date, created_at, updated_at, completed_at, deleted_at
 FROM todos
-WHERE list_id = ? AND deleted_at IS NULL
+WHERE list_id = sqlc.arg('list_id') AND deleted_at IS NULL
 ORDER BY created_at DESC;

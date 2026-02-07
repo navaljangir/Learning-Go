@@ -2,10 +2,13 @@ package utils
 
 import "errors"
 
-// Custom error types for the application
+// Sentinel errors - use with errors.Is() for error checking
 var (
 	// ErrNotFound is returned when a resource is not found
 	ErrNotFound = errors.New("resource not found")
+
+	// ErrForbidden is returned when user doesn't have permission to access resource
+	ErrForbidden = errors.New("forbidden")
 
 	// ErrDuplicateKey is returned when a unique constraint is violated
 	ErrDuplicateKey = errors.New("duplicate key violation")
@@ -13,27 +16,25 @@ var (
 	// ErrInvalidCredentials is returned when authentication fails
 	ErrInvalidCredentials = errors.New("invalid credentials")
 
-	// ErrUnauthorized is returned when user is not authorized
-	ErrUnauthorized = errors.New("unauthorized")
-
-	// ErrForbidden is returned when user doesn't have permission
-	ErrForbidden = errors.New("forbidden")
-
 	// ErrBadRequest is returned when request is malformed
 	ErrBadRequest = errors.New("bad request")
-
-	// ErrInternalServer is returned for unexpected errors
-	ErrInternalServer = errors.New("internal server error")
-
-	// ErrValidation is returned when validation fails
-	ErrValidation = errors.New("validation error")
 )
 
-// AppError represents an application-level error with additional context
+// AppError represents an application-level error with HTTP status code
+// Services return this to specify exactly what HTTP code should be used
+//
+// Usage in services:
+//   return &utils.AppError{Err: utils.ErrNotFound, Message: "todo not found", StatusCode: 404}
+//
+// Usage in middleware:
+//   var appErr *utils.AppError
+//   if errors.As(err, &appErr) {
+//       c.JSON(appErr.StatusCode, gin.H{"error": appErr.Message})
+//   }
 type AppError struct {
-	Err     error
-	Message string
-	Code    int
+	Err        error  // The underlying sentinel error (ErrNotFound, ErrForbidden, etc.)
+	Message    string // User-friendly error message
+	StatusCode int    // HTTP status code (404, 403, 500, etc.)
 }
 
 // Error implements the error interface
@@ -41,14 +42,13 @@ func (e *AppError) Error() string {
 	if e.Message != "" {
 		return e.Message
 	}
-	return e.Err.Error()
+	if e.Err != nil {
+		return e.Err.Error()
+	}
+	return "unknown error"
 }
 
-// NewAppError creates a new application error
-func NewAppError(err error, message string, code int) *AppError {
-	return &AppError{
-		Err:     err,
-		Message: message,
-		Code:    code,
-	}
+// Unwrap allows errors.Is and errors.As to work with wrapped errors
+func (e *AppError) Unwrap() error {
+	return e.Err
 }

@@ -21,6 +21,7 @@ type Todo struct {
 	ID          uuid.UUID
 	UserID      uuid.UUID
 	ListID      *uuid.UUID // Nullable: NULL = global/uncategorized todo
+	ListName    string     // Name of the list (populated from JOIN, not stored)
 	Title       string
 	Description string
 	Completed   bool

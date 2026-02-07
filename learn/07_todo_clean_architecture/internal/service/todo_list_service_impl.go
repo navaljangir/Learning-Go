@@ -56,22 +56,9 @@ func (s *TodoListServiceImpl) GetByID(ctx context.Context, listID, userID uuid.U
 	}
 
 	// Get todos in this list
-	// Note: We'll need to add a method to TodoRepository to get todos by list_id
-	// For now, we'll use a filter approach
-	filter := repository.TodoFilter{
-		UserID: &userID,
-	}
-	todos, err := s.todoRepo.FindWithFilters(ctx, filter, 1000, 0) // Get up to 1000 todos
+	listTodos, err := s.todoRepo.FindByListID(ctx, listID)
 	if err != nil {
 		return nil, err
-	}
-
-	// Filter todos that belong to this list
-	var listTodos []*entity.Todo
-	for _, todo := range todos {
-		// We'll need to add ListID field to Todo entity
-		// For now, return all todos
-		listTodos = append(listTodos, todo)
 	}
 
 	response := dto.ListWithTodosToResponse(list, listTodos)
@@ -150,19 +137,9 @@ func (s *TodoListServiceImpl) Duplicate(ctx context.Context, listID, userID uuid
 	}
 
 	// Get todos in this list
-	filter := repository.TodoFilter{
-		UserID: &userID,
-	}
-	allTodos, err := s.todoRepo.FindWithFilters(ctx, filter, 1000, 0)
+	listTodos, err := s.todoRepo.FindByListID(ctx, listID)
 	if err != nil {
 		return nil, err
-	}
-
-	// Filter todos that belong to this list
-	var listTodos []*entity.Todo
-	for _, todo := range allTodos {
-		// We'll need to check ListID once it's added to Todo entity
-		listTodos = append(listTodos, todo)
 	}
 
 	// Create new list with "(Copy)" suffix
@@ -185,7 +162,9 @@ func (s *TodoListServiceImpl) Duplicate(ctx context.Context, listID, userID uuid
 			todo.Priority,
 			todo.DueDate,
 		)
-		// Note: Once we add ListID to Todo entity, set it here to newList.ID
+		// Set the new list ID
+		newListID := newList.ID
+		newTodo.ListID = &newListID
 
 		if err := s.todoRepo.Create(ctx, newTodo); err != nil {
 			// Consider transaction rollback here in production
