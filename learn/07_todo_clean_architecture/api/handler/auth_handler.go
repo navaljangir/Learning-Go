@@ -42,13 +42,13 @@ func (h *AuthHandler) Register(c *gin.Context) {
 			})
 			return
 		}
-		utils.BadRequest(c, err.Error())
+		c.Error(err)
 		return
 	}
 
 	response, err := h.userService.Register(c.Request.Context(), req)
 	if err != nil {
-		utils.BadRequest(c, err.Error())
+		c.Error(err) // Middleware will handle AppError
 		return
 	}
 
@@ -76,13 +76,13 @@ func (h *AuthHandler) Login(c *gin.Context) {
 			})
 			return
 		}
-		utils.BadRequest(c, err.Error())
+		c.Error(err)
 		return
 	}
 
 	response, err := h.userService.Login(c.Request.Context(), req)
 	if err != nil {
-		utils.Unauthorized(c, err.Error())
+		c.Error(err) // Middleware will handle AppError
 		return
 	}
 

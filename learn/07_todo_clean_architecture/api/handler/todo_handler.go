@@ -28,13 +28,13 @@ func (h *TodoHandler) Create(c *gin.Context) {
 
 	var req dto.CreateTodoRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.BadRequest(c, err.Error())
+		c.Error(err)
 		return
 	}
 
 	response, err := h.todoService.Create(c.Request.Context(), userID, req)
 	if err != nil {
-		utils.InternalError(c, err.Error())
+		c.Error(err)
 		return
 	}
 
@@ -58,7 +58,7 @@ func (h *TodoHandler) List(c *gin.Context) {
 
 	response, err := h.todoService.List(c.Request.Context(), userID, page, pageSize)
 	if err != nil {
-		utils.InternalError(c, err.Error())
+		c.Error(err)
 		return
 	}
 
@@ -77,7 +77,7 @@ func (h *TodoHandler) GetByID(c *gin.Context) {
 
 	response, err := h.todoService.GetByID(c.Request.Context(), todoID, userID)
 	if err != nil {
-		utils.NotFound(c, err.Error())
+		c.Error(err)
 		return
 	}
 
@@ -102,8 +102,7 @@ func (h *TodoHandler) Update(c *gin.Context) {
 
 	response, err := h.todoService.Update(c.Request.Context(), todoID, userID, req)
 	if err != nil {
-		// Let middleware handle the error
-		_ = c.Error(err)
+		c.Error(err)
 		return
 	}
 
@@ -122,8 +121,7 @@ func (h *TodoHandler) ToggleComplete(c *gin.Context) {
 
 	response, err := h.todoService.ToggleComplete(c.Request.Context(), todoID, userID)
 	if err != nil {
-		// Let middleware handle the error
-		_ = c.Error(err)
+		c.Error(err)
 		return
 	}
 
@@ -141,8 +139,7 @@ func (h *TodoHandler) Delete(c *gin.Context) {
 	}
 
 	if err := h.todoService.Delete(c.Request.Context(), todoID, userID); err != nil {
-		// Let middleware handle the error
-		_ = c.Error(err)
+		c.Error(err)
 		return
 	}
 
@@ -155,12 +152,12 @@ func (h *TodoHandler) MoveTodos(c *gin.Context) {
 
 	var req dto.MoveTodosRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.BadRequest(c, err.Error())
+		c.Error(err)
 		return
 	}
 
 	if err := h.todoService.MoveTodos(c.Request.Context(), userID, req); err != nil {
-		utils.InternalError(c, err.Error())
+		c.Error(err)
 		return
 	}
 

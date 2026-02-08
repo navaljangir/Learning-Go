@@ -34,7 +34,7 @@ func (h *UserHandler) GetProfile(c *gin.Context) {
 
 	response, err := h.userService.GetProfile(c.Request.Context(), userID)
 	if err != nil {
-		utils.NotFound(c, err.Error())
+		c.Error(err)
 		return
 	}
 
@@ -56,13 +56,13 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 
 	var req dto.UpdateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.BadRequest(c, err.Error())
+		c.Error(err)
 		return
 	}
 
 	response, err := h.userService.UpdateProfile(c.Request.Context(), userID, req)
 	if err != nil {
-		utils.InternalError(c, err.Error())
+		c.Error(err)
 		return
 	}
 

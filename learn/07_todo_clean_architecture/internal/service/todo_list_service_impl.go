@@ -2,12 +2,12 @@ package service
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"todo_app/domain/entity"
 	"todo_app/domain/repository"
 	domainService "todo_app/domain/service"
 	"todo_app/internal/dto"
+	"todo_app/pkg/utils"
 
 	"github.com/google/uuid"
 )
@@ -36,7 +36,11 @@ func (s *TodoListServiceImpl) Create(ctx context.Context, userID uuid.UUID, req 
 
 	// Save to database
 	if err := s.listRepo.Create(ctx, list); err != nil {
-		return nil, err
+		return nil, &utils.AppError{
+			Err:        err,
+			Message:    "Failed to create list",
+			StatusCode: 500,
+		}
 	}
 
 	response := dto.ListToResponse(list)
@@ -47,18 +51,30 @@ func (s *TodoListServiceImpl) Create(ctx context.Context, userID uuid.UUID, req 
 func (s *TodoListServiceImpl) GetByID(ctx context.Context, listID, userID uuid.UUID) (*dto.ListWithTodosResponse, error) {
 	list, err := s.listRepo.FindByID(ctx, listID)
 	if err != nil {
-		return nil, err
+		return nil, &utils.AppError{
+			Err:        utils.ErrNotFound,
+			Message:    "List not found",
+			StatusCode: 404,
+		}
 	}
 
 	// Authorization check: ensure list belongs to the requesting user
 	if !list.BelongsToUser(userID) {
-		return nil, errors.New("unauthorized access to this list")
+		return nil, &utils.AppError{
+			Err:        utils.ErrForbidden,
+			Message:    "Unauthorized access to this list",
+			StatusCode: 403,
+		}
 	}
 
 	// Get todos in this list
 	listTodos, err := s.todoRepo.FindByListID(ctx, listID)
 	if err != nil {
-		return nil, err
+		return nil, &utils.AppError{
+			Err:        err,
+			Message:    "Failed to fetch todos",
+			StatusCode: 500,
+		}
 	}
 
 	response := dto.ListWithTodosToResponse(list, listTodos)
@@ -69,7 +85,11 @@ func (s *TodoListServiceImpl) GetByID(ctx context.Context, listID, userID uuid.U
 func (s *TodoListServiceImpl) List(ctx context.Context, userID uuid.UUID) (*dto.ListsResponse, error) {
 	lists, err := s.listRepo.FindByUserID(ctx, userID)
 	if err != nil {
-		return nil, err
+		return nil, &utils.AppError{
+			Err:        err,
+			Message:    "Failed to fetch lists",
+			StatusCode: 500,
+		}
 	}
 
 	responses := dto.ListsToResponse(lists)
@@ -85,12 +105,20 @@ func (s *TodoListServiceImpl) Update(ctx context.Context, listID, userID uuid.UU
 	// Fetch existing list
 	list, err := s.listRepo.FindByID(ctx, listID)
 	if err != nil {
-		return nil, err
+		return nil, &utils.AppError{
+			Err:        utils.ErrNotFound,
+			Message:    "List not found",
+			StatusCode: 404,
+		}
 	}
 
 	// Authorization check
 	if !list.BelongsToUser(userID) {
-		return nil, errors.New("unauthorized access to this list")
+		return nil, &utils.AppError{
+			Err:        utils.ErrForbidden,
+			Message:    "Unauthorized access to this list",
+			StatusCode: 403,
+		}
 	}
 
 	// Update name
@@ -98,7 +126,11 @@ func (s *TodoListServiceImpl) Update(ctx context.Context, listID, userID uuid.UU
 
 	// Save changes
 	if err := s.listRepo.Update(ctx, list); err != nil {
-		return nil, err
+		return nil, &utils.AppError{
+			Err:        err,
+			Message:    "Failed to update list",
+			StatusCode: 500,
+		}
 	}
 
 	response := dto.ListToResponse(list)
@@ -110,17 +142,32 @@ func (s *TodoListServiceImpl) Delete(ctx context.Context, listID, userID uuid.UU
 	// Fetch existing list
 	list, err := s.listRepo.FindByID(ctx, listID)
 	if err != nil {
-		return err
+		return &utils.AppError{
+			Err:        utils.ErrNotFound,
+			Message:    "List not found",
+			StatusCode: 404,
+		}
 	}
 
 	// Authorization check
 	if !list.BelongsToUser(userID) {
-		return errors.New("unauthorized access to this list")
+		return &utils.AppError{
+			Err:        utils.ErrForbidden,
+			Message:    "Unauthorized access to this list",
+			StatusCode: 403,
+		}
 	}
 
 	// Soft delete the list
 	// Note: All todos in this list will be permanently deleted via ON DELETE CASCADE
-	return s.listRepo.Delete(ctx, listID)
+	if err := s.listRepo.Delete(ctx, listID); err != nil {
+		return &utils.AppError{
+			Err:        err,
+			Message:    "Failed to delete list",
+			StatusCode: 500,
+		}
+	}
+	return nil
 }
 
 // Duplicate creates a copy of a list with all its todos
@@ -128,18 +175,30 @@ func (s *TodoListServiceImpl) Duplicate(ctx context.Context, listID, userID uuid
 	// Fetch existing list
 	list, err := s.listRepo.FindByID(ctx, listID)
 	if err != nil {
-		return nil, err
+		return nil, &utils.AppError{
+			Err:        utils.ErrNotFound,
+			Message:    "List not found",
+			StatusCode: 404,
+		}
 	}
 
 	// Authorization check
 	if !list.BelongsToUser(userID) {
-		return nil, errors.New("unauthorized access to this list")
+		return nil, &utils.AppError{
+			Err:        utils.ErrForbidden,
+			Message:    "Unauthorized access to this list",
+			StatusCode: 403,
+		}
 	}
 
 	// Get todos in this list
 	listTodos, err := s.todoRepo.FindByListID(ctx, listID)
 	if err != nil {
-		return nil, err
+		return nil, &utils.AppError{
+			Err:        err,
+			Message:    "Failed to fetch todos",
+			StatusCode: 500,
+		}
 	}
 
 	// Create new list with "(Copy)" suffix
@@ -148,7 +207,11 @@ func (s *TodoListServiceImpl) Duplicate(ctx context.Context, listID, userID uuid
 
 	// Save new list
 	if err := s.listRepo.Create(ctx, newList); err != nil {
-		return nil, err
+		return nil, &utils.AppError{
+			Err:        err,
+			Message:    "Failed to create duplicate list",
+			StatusCode: 500,
+		}
 	}
 
 	// Duplicate all todos
@@ -168,7 +231,11 @@ func (s *TodoListServiceImpl) Duplicate(ctx context.Context, listID, userID uuid
 
 		if err := s.todoRepo.Create(ctx, newTodo); err != nil {
 			// Consider transaction rollback here in production
-			return nil, err
+			return nil, &utils.AppError{
+				Err:        err,
+				Message:    "Failed to duplicate todos",
+				StatusCode: 500,
+			}
 		}
 
 		newTodos = append(newTodos, newTodo)

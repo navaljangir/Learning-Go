@@ -2,12 +2,12 @@ package service
 
 import (
 	"context"
-	"errors"
 	"time"
 	"todo_app/domain/entity"
 	"todo_app/domain/repository"
 	domainService "todo_app/domain/service"
 	"todo_app/internal/dto"
+	"todo_app/pkg/utils"
 
 	"github.com/google/uuid"
 )
@@ -50,7 +50,11 @@ func (s *TodoServiceImpl) Create(ctx context.Context, userID uuid.UUID, req dto.
 	if req.ListID != nil {
 		listID, err := uuid.Parse(*req.ListID)
 		if err != nil {
-			return nil, errors.New("invalid list ID format")
+			return nil, &utils.AppError{
+				Err:        utils.ErrBadRequest,
+				Message:    "Invalid list ID format",
+				StatusCode: 400,
+			}
 		}
 		todo.ListID = &listID
 		// TODO: Verify list exists and belongs to user
@@ -58,7 +62,11 @@ func (s *TodoServiceImpl) Create(ctx context.Context, userID uuid.UUID, req dto.
 
 	// Save to database
 	if err := s.todoRepo.Create(ctx, todo); err != nil {
-		return nil, err
+		return nil, &utils.AppError{
+			Err:        err,
+			Message:    "Failed to create todo",
+			StatusCode: 500,
+		}
 	}
 
 	response := dto.TodoToResponse(todo)
@@ -69,12 +77,20 @@ func (s *TodoServiceImpl) Create(ctx context.Context, userID uuid.UUID, req dto.
 func (s *TodoServiceImpl) GetByID(ctx context.Context, todoID, userID uuid.UUID) (*dto.TodoResponse, error) {
 	todo, err := s.todoRepo.FindByID(ctx, todoID)
 	if err != nil {
-		return nil, err
+		return nil, &utils.AppError{
+			Err:        utils.ErrNotFound,
+			Message:    "Todo not found",
+			StatusCode: 404,
+		}
 	}
 
 	// Authorization check: ensure todo belongs to the requesting user
 	if !todo.BelongsToUser(userID) {
-		return nil, errors.New("unauthorized access to this todo")
+		return nil, &utils.AppError{
+			Err:        utils.ErrForbidden,
+			Message:    "Unauthorized access to this todo",
+			StatusCode: 403,
+		}
 	}
 
 	response := dto.TodoToResponse(todo)
@@ -96,13 +112,21 @@ func (s *TodoServiceImpl) List(ctx context.Context, userID uuid.UUID, page, page
 	// Fetch todos from repository
 	todos, err := s.todoRepo.FindByUserID(ctx, userID, pageSize, offset)
 	if err != nil {
-		return nil, err
+		return nil, &utils.AppError{
+			Err:        err,
+			Message:    "Failed to fetch todos",
+			StatusCode: 500,
+		}
 	}
 
 	// Get total count for pagination
 	total, err := s.todoRepo.CountByUser(ctx, userID)
 	if err != nil {
-		return nil, err
+		return nil, &utils.AppError{
+			Err:        err,
+			Message:    "Failed to count todos",
+			StatusCode: 500,
+		}
 	}
 
 	// Convert entities to DTOs
@@ -128,12 +152,20 @@ func (s *TodoServiceImpl) Update(ctx context.Context, todoID, userID uuid.UUID, 
 	// Fetch existing todo
 	todo, err := s.todoRepo.FindByID(ctx, todoID)
 	if err != nil {
-		return nil, err
+		return nil, &utils.AppError{
+			Err:        utils.ErrNotFound,
+			Message:    "Todo not found",
+			StatusCode: 404,
+		}
 	}
 
 	// Authorization check
 	if !todo.BelongsToUser(userID) {
-		return nil, errors.New("unauthorized access to this todo")
+		return nil, &utils.AppError{
+			Err:        utils.ErrForbidden,
+			Message:    "Unauthorized access to this todo",
+			StatusCode: 403,
+		}
 	}
 
 	// Update fields if provided
@@ -172,7 +204,11 @@ func (s *TodoServiceImpl) Update(ctx context.Context, todoID, userID uuid.UUID, 
 
 	// Save changes
 	if err := s.todoRepo.Update(ctx, todo); err != nil {
-		return nil, err
+		return nil, &utils.AppError{
+			Err:        err,
+			Message:    "Failed to update todo",
+			StatusCode: 500,
+		}
 	}
 
 	response := dto.TodoToResponse(todo)
@@ -184,12 +220,20 @@ func (s *TodoServiceImpl) ToggleComplete(ctx context.Context, todoID, userID uui
 	// Fetch existing todo
 	todo, err := s.todoRepo.FindByID(ctx, todoID)
 	if err != nil {
-		return nil, err
+		return nil, &utils.AppError{
+			Err:        utils.ErrNotFound,
+			Message:    "Todo not found",
+			StatusCode: 404,
+		}
 	}
 
 	// Authorization check
 	if !todo.BelongsToUser(userID) {
-		return nil, errors.New("unauthorized access to this todo")
+		return nil, &utils.AppError{
+			Err:        utils.ErrForbidden,
+			Message:    "Unauthorized access to this todo",
+			StatusCode: 403,
+		}
 	}
 
 	// Toggle completion using domain logic
@@ -201,7 +245,11 @@ func (s *TodoServiceImpl) ToggleComplete(ctx context.Context, todoID, userID uui
 
 	// Save changes
 	if err := s.todoRepo.Update(ctx, todo); err != nil {
-		return nil, err
+		return nil, &utils.AppError{
+			Err:        err,
+			Message:    "Failed to update todo",
+			StatusCode: 500,
+		}
 	}
 
 	response := dto.TodoToResponse(todo)
@@ -213,23 +261,42 @@ func (s *TodoServiceImpl) Delete(ctx context.Context, todoID, userID uuid.UUID) 
 	// Fetch existing todo
 	todo, err := s.todoRepo.FindByID(ctx, todoID)
 	if err != nil {
-		return err
+		return &utils.AppError{
+			Err:        utils.ErrNotFound,
+			Message:    "Todo not found",
+			StatusCode: 404,
+		}
 	}
 
 	// Authorization check
 	if !todo.BelongsToUser(userID) {
-		return errors.New("unauthorized access to this todo")
+		return &utils.AppError{
+			Err:        utils.ErrForbidden,
+			Message:    "Unauthorized access to this todo",
+			StatusCode: 403,
+		}
 	}
 
 	// Soft delete the todo
-	return s.todoRepo.Delete(ctx, todoID)
+	if err := s.todoRepo.Delete(ctx, todoID); err != nil {
+		return &utils.AppError{
+			Err:        err,
+			Message:    "Failed to delete todo",
+			StatusCode: 500,
+		}
+	}
+	return nil
 }
 
 // MoveTodos moves multiple todos to a specific list or to global (nil list_id)
 func (s *TodoServiceImpl) MoveTodos(ctx context.Context, userID uuid.UUID, req dto.MoveTodosRequest) error {
 	// Validate input
 	if len(req.TodoIDs) == 0 {
-		return errors.New("no todos specified")
+		return &utils.AppError{
+			Err:        utils.ErrBadRequest,
+			Message:    "No todos specified",
+			StatusCode: 400,
+		}
 	}
 
 	// Convert string IDs to UUIDs
@@ -237,7 +304,11 @@ func (s *TodoServiceImpl) MoveTodos(ctx context.Context, userID uuid.UUID, req d
 	for i, idStr := range req.TodoIDs {
 		id, err := uuid.Parse(idStr)
 		if err != nil {
-			return errors.New("invalid todo ID format")
+			return &utils.AppError{
+				Err:        utils.ErrBadRequest,
+				Message:    "Invalid todo ID format",
+				StatusCode: 400,
+			}
 		}
 		todoIDs[i] = id
 	}
@@ -247,10 +318,18 @@ func (s *TodoServiceImpl) MoveTodos(ctx context.Context, userID uuid.UUID, req d
 	for _, todoID := range todoIDs {
 		todo, err := s.todoRepo.FindByID(ctx, todoID)
 		if err != nil {
-			return errors.New("one or more todos not found")
+			return &utils.AppError{
+				Err:        utils.ErrNotFound,
+				Message:    "One or more todos not found",
+				StatusCode: 404,
+			}
 		}
 		if !todo.BelongsToUser(userID) {
-			return errors.New("unauthorized access to one or more todos")
+			return &utils.AppError{
+				Err:        utils.ErrForbidden,
+				Message:    "Unauthorized access to one or more todos",
+				StatusCode: 403,
+			}
 		}
 	}
 
@@ -259,12 +338,23 @@ func (s *TodoServiceImpl) MoveTodos(ctx context.Context, userID uuid.UUID, req d
 	if req.ListID != nil {
 		listID, err := uuid.Parse(*req.ListID)
 		if err != nil {
-			return errors.New("invalid list ID format")
+			return &utils.AppError{
+				Err:        utils.ErrBadRequest,
+				Message:    "Invalid list ID format",
+				StatusCode: 400,
+			}
 		}
 		listIDPtr = &listID
 		// TODO: In Phase 2, verify the list exists and belongs to the user
 	}
 
 	// Perform the bulk update
-	return s.todoRepo.UpdateListID(ctx, todoIDs, listIDPtr, userID)
+	if err := s.todoRepo.UpdateListID(ctx, todoIDs, listIDPtr, userID); err != nil {
+		return &utils.AppError{
+			Err:        err,
+			Message:    "Failed to move todos",
+			StatusCode: 500,
+		}
+	}
+	return nil
 }

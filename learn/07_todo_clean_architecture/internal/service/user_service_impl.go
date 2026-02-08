@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"todo_app/domain/entity"
 	"todo_app/domain/repository"
 	domainService "todo_app/domain/service"
@@ -34,25 +33,45 @@ func (s *UserServiceImpl) Register(ctx context.Context, req dto.RegisterRequest)
 	// Check if username already exists
 	exists, err := s.userRepo.ExistsByUsername(ctx, req.Username)
 	if err != nil {
-		return nil, err
+		return nil, &utils.AppError{
+			Err:        err,
+			Message:    "Failed to check username",
+			StatusCode: 500,
+		}
 	}
 	if exists {
-		return nil, errors.New("username already exists")
+		return nil, &utils.AppError{
+			Err:        utils.ErrDuplicateKey,
+			Message:    "Username already exists",
+			StatusCode: 400,
+		}
 	}
 
 	// Check if email already exists
 	exists, err = s.userRepo.ExistsByEmail(ctx, req.Email)
 	if err != nil {
-		return nil, err
+		return nil, &utils.AppError{
+			Err:        err,
+			Message:    "Failed to check email",
+			StatusCode: 500,
+		}
 	}
 	if exists {
-		return nil, errors.New("email already exists")
+		return nil, &utils.AppError{
+			Err:        utils.ErrDuplicateKey,
+			Message:    "Email already exists",
+			StatusCode: 400,
+		}
 	}
 
 	// Hash password
 	hashedPassword, err := utils.HashPassword(req.Password)
 	if err != nil {
-		return nil, err
+		return nil, &utils.AppError{
+			Err:        err,
+			Message:    "Failed to process password",
+			StatusCode: 500,
+		}
 	}
 
 	// Create user entity
@@ -60,7 +79,11 @@ func (s *UserServiceImpl) Register(ctx context.Context, req dto.RegisterRequest)
 
 	// Save to database
 	if err := s.userRepo.Create(ctx, user); err != nil {
-		return nil, err
+		return nil, &utils.AppError{
+			Err:        err,
+			Message:    "Failed to create user",
+			StatusCode: 500,
+		}
 	}
 
 	// Generate JWT token
@@ -81,17 +104,29 @@ func (s *UserServiceImpl) Login(ctx context.Context, req dto.LoginRequest) (*dto
 	// Find user by username
 	user, err := s.userRepo.FindByUsername(ctx, req.Username)
 	if err != nil {
-		return nil, errors.New("invalid credentials")
+		return nil, &utils.AppError{
+			Err:        utils.ErrInvalidCredentials,
+			Message:    "Invalid credentials",
+			StatusCode: 401,
+		}
 	}
 
 	// Check if user is deleted
 	if user.IsDeleted() {
-		return nil, errors.New("account not found")
+		return nil, &utils.AppError{
+			Err:        utils.ErrNotFound,
+			Message:    "Account not found",
+			StatusCode: 404,
+		}
 	}
 
 	// Verify password
 	if !utils.CheckPassword(req.Password, user.PasswordHash) {
-		return nil, errors.New("invalid credentials")
+		return nil, &utils.AppError{
+			Err:        utils.ErrInvalidCredentials,
+			Message:    "Invalid credentials",
+			StatusCode: 401,
+		}
 	}
 
 	// Generate JWT token
@@ -111,11 +146,19 @@ func (s *UserServiceImpl) Login(ctx context.Context, req dto.LoginRequest) (*dto
 func (s *UserServiceImpl) GetProfile(ctx context.Context, userID uuid.UUID) (*dto.UserResponse, error) {
 	user, err := s.userRepo.FindByID(ctx, userID)
 	if err != nil {
-		return nil, err
+		return nil, &utils.AppError{
+			Err:        utils.ErrNotFound,
+			Message:    "User not found",
+			StatusCode: 404,
+		}
 	}
 
 	if user.IsDeleted() {
-		return nil, errors.New("user not found")
+		return nil, &utils.AppError{
+			Err:        utils.ErrNotFound,
+			Message:    "User not found",
+			StatusCode: 404,
+		}
 	}
 
 	response := dto.UserToResponse(user)
@@ -126,11 +169,19 @@ func (s *UserServiceImpl) GetProfile(ctx context.Context, userID uuid.UUID) (*dt
 func (s *UserServiceImpl) UpdateProfile(ctx context.Context, userID uuid.UUID, req dto.UpdateUserRequest) (*dto.UserResponse, error) {
 	user, err := s.userRepo.FindByID(ctx, userID)
 	if err != nil {
-		return nil, err
+		return nil, &utils.AppError{
+			Err:        utils.ErrNotFound,
+			Message:    "User not found",
+			StatusCode: 404,
+		}
 	}
 
 	if user.IsDeleted() {
-		return nil, errors.New("user not found")
+		return nil, &utils.AppError{
+			Err:        utils.ErrNotFound,
+			Message:    "User not found",
+			StatusCode: 404,
+		}
 	}
 
 	// Update user fields
@@ -138,7 +189,11 @@ func (s *UserServiceImpl) UpdateProfile(ctx context.Context, userID uuid.UUID, r
 
 	// Save changes
 	if err := s.userRepo.Update(ctx, user); err != nil {
-		return nil, err
+		return nil, &utils.AppError{
+			Err:        err,
+			Message:    "Failed to update user",
+			StatusCode: 500,
+		}
 	}
 
 	response := dto.UserToResponse(user)

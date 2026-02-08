@@ -36,13 +36,13 @@ func (h *TodoListHandler) Create(c *gin.Context) {
 
 	var req dto.CreateListRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.BadRequest(c, err.Error())
+		c.Error(err)
 		return
 	}
 
 	response, err := h.listService.Create(c.Request.Context(), userID, req)
 	if err != nil {
-		utils.InternalError(c, err.Error())
+		c.Error(err)
 		return
 	}
 
@@ -62,7 +62,7 @@ func (h *TodoListHandler) List(c *gin.Context) {
 
 	response, err := h.listService.List(c.Request.Context(), userID)
 	if err != nil {
-		utils.InternalError(c, err.Error())
+		c.Error(err)
 		return
 	}
 
@@ -89,7 +89,7 @@ func (h *TodoListHandler) GetByID(c *gin.Context) {
 
 	response, err := h.listService.GetByID(c.Request.Context(), listID, userID)
 	if err != nil {
-		utils.NotFound(c, err.Error())
+		c.Error(err)
 		return
 	}
 
@@ -118,13 +118,13 @@ func (h *TodoListHandler) Update(c *gin.Context) {
 
 	var req dto.UpdateListRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.BadRequest(c, err.Error())
+		c.Error(err)
 		return
 	}
 
 	response, err := h.listService.Update(c.Request.Context(), listID, userID, req)
 	if err != nil {
-		utils.InternalError(c, err.Error())
+		c.Error(err)
 		return
 	}
 
@@ -151,7 +151,7 @@ func (h *TodoListHandler) Delete(c *gin.Context) {
 	}
 
 	if err := h.listService.Delete(c.Request.Context(), listID, userID); err != nil {
-		utils.InternalError(c, err.Error())
+		c.Error(err)
 		return
 	}
 
@@ -179,7 +179,7 @@ func (h *TodoListHandler) Duplicate(c *gin.Context) {
 
 	response, err := h.listService.Duplicate(c.Request.Context(), listID, userID)
 	if err != nil {
-		utils.InternalError(c, err.Error())
+		c.Error(err)
 		return
 	}
 
