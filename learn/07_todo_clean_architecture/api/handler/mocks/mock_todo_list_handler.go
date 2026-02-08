@@ -10,10 +10,12 @@ type MockTodoListHandler struct {
 	UpdateCalled    bool
 	DeleteCalled    bool
 	DuplicateCalled bool
+	ShareCalled     bool
 
 	CreateCount    int
 	ListCount      int
 	DuplicateCount int
+	ShareCount     int
 }
 
 // NewMockTodoListHandler creates a new mock todo list handler
@@ -92,5 +94,18 @@ func (m *MockTodoListHandler) Duplicate(c *gin.Context) {
 		"id":    "mock-list-id-copy",
 		"name":  "Mock List (Copy)",
 		"todos": []gin.H{},
+	})
+}
+
+// Share implements TodoListHandlerInterface.Share
+func (m *MockTodoListHandler) Share(c *gin.Context) {
+	m.ShareCalled = true
+	m.ShareCount++
+
+	c.JSON(201, gin.H{
+		"id":      "mock-shared-list-id",
+		"name":    "Mock List (from testuser)",
+		"user_id": "mock-target-user-id",
+		"todos":   []gin.H{},
 	})
 }

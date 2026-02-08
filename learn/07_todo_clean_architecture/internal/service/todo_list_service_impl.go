@@ -16,16 +16,22 @@ import (
 type TodoListServiceImpl struct {
 	listRepo repository.TodoListRepository
 	todoRepo repository.TodoRepository
+	userRepo repository.UserRepository
 }
 
 // Compile-time check to ensure TodoListServiceImpl implements TodoListService interface
 var _ domainService.TodoListService = (*TodoListServiceImpl)(nil)
 
 // NewTodoListService creates a new todo list service
-func NewTodoListService(listRepo repository.TodoListRepository, todoRepo repository.TodoRepository) domainService.TodoListService {
+func NewTodoListService(
+	listRepo repository.TodoListRepository,
+	todoRepo repository.TodoRepository,
+	userRepo repository.UserRepository,
+) domainService.TodoListService {
 	return &TodoListServiceImpl{
 		listRepo: listRepo,
 		todoRepo: todoRepo,
+		userRepo: userRepo,
 	}
 }
 
@@ -234,6 +240,105 @@ func (s *TodoListServiceImpl) Duplicate(ctx context.Context, listID, userID uuid
 			return nil, &utils.AppError{
 				Err:        err,
 				Message:    "Failed to duplicate todos",
+				StatusCode: 500,
+			}
+		}
+
+		newTodos = append(newTodos, newTodo)
+	}
+
+	response := dto.ListWithTodosToResponse(newList, newTodos)
+	return &response, nil
+}
+
+// Share creates a copy of a list with all its todos for a different user
+func (s *TodoListServiceImpl) Share(ctx context.Context, listID, ownerUserID, targetUserID uuid.UUID, req dto.ShareListRequest) (*dto.ListWithTodosResponse, error) {
+	// Verify that owner and target are different users
+	if ownerUserID == targetUserID {
+		return nil, &utils.AppError{
+			Err:        utils.ErrBadRequest,
+			Message:    "Cannot share list with yourself",
+			StatusCode: 400,
+		}
+	}
+
+	// Verify target user exists
+	targetUser, err := s.userRepo.FindByID(ctx, targetUserID)
+	if err != nil {
+		return nil, &utils.AppError{
+			Err:        utils.ErrNotFound,
+			Message:    "Target user not found",
+			StatusCode: 404,
+		}
+	}
+
+	// Fetch the list to be shared
+	list, err := s.listRepo.FindByID(ctx, listID)
+	if err != nil {
+		return nil, &utils.AppError{
+			Err:        utils.ErrNotFound,
+			Message:    "List not found",
+			StatusCode: 404,
+		}
+	}
+
+	// Authorization check: ensure list belongs to the owner
+	if !list.BelongsToUser(ownerUserID) {
+		return nil, &utils.AppError{
+			Err:        utils.ErrForbidden,
+			Message:    "Unauthorized access to this list",
+			StatusCode: 403,
+		}
+	}
+
+	// Get todos in this list
+	listTodos, err := s.todoRepo.FindByListID(ctx, listID)
+	if err != nil {
+		return nil, &utils.AppError{
+			Err:        err,
+			Message:    "Failed to fetch todos",
+			StatusCode: 500,
+		}
+	}
+
+	// Determine the name for the shared list
+	newName := req.CustomName
+	if newName == "" {
+		newName = fmt.Sprintf("%s (from %s)", list.Name, targetUser.Username)
+	}
+
+	// Create new list for the target user
+	newList := entity.NewTodoList(targetUserID, newName)
+
+	// Save new list
+	if err := s.listRepo.Create(ctx, newList); err != nil {
+		return nil, &utils.AppError{
+			Err:        err,
+			Message:    "Failed to create shared list",
+			StatusCode: 500,
+		}
+	}
+
+	// Duplicate all todos for the target user
+	var newTodos []*entity.Todo
+	for _, todo := range listTodos {
+		// Create new todo with same properties but for target user
+		newTodo := entity.NewTodo(
+			targetUserID,
+			todo.Title,
+			todo.Description,
+			todo.Priority,
+			todo.DueDate,
+		)
+		// Set the new list ID
+		newListID := newList.ID
+		newTodo.ListID = &newListID
+
+		if err := s.todoRepo.Create(ctx, newTodo); err != nil {
+			// Consider transaction rollback here in production
+			return nil, &utils.AppError{
+				Err:        err,
+				Message:    "Failed to share todos",
 				StatusCode: 500,
 			}
 		}

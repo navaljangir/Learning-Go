@@ -121,7 +121,7 @@ func initServices(
 ) (service.UserService, service.TodoService, service.TodoListService) {
 	userService := serviceImpl.NewUserService(userRepo, jwtUtil)
 	todoService := serviceImpl.NewTodoService(todoRepo)
-	listService := serviceImpl.NewTodoListService(listRepo, todoRepo)
+	listService := serviceImpl.NewTodoListService(listRepo, todoRepo, userRepo)
 	log.Println("[OK] Services initialized")
 	return userService, todoService, listService
 }

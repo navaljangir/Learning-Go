@@ -17,14 +17,20 @@ type UpdateListRequest struct {
 	Name string `json:"name" binding:"required,min=1,max=100"`
 }
 
+// ShareListRequest represents a request to share a list with another user
+type ShareListRequest struct {
+	TargetUserID uuid.UUID `json:"target_user_id" binding:"required"`
+	CustomName   string    `json:"custom_name,omitempty"` // Optional: custom name for shared list
+}
+
 // ListResponse represents a list in API responses
 type ListResponse struct {
-	ID        uuid.UUID  `json:"id"`
-	UserID    uuid.UUID  `json:"user_id"`
-	Name      string     `json:"name"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt time.Time  `json:"updated_at"`
-	TodoCount int        `json:"todo_count,omitempty"` // Optional: number of todos in list
+	ID        uuid.UUID `json:"id"`
+	UserID    uuid.UUID `json:"user_id"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	TodoCount int       `json:"todo_count,omitempty"` // Optional: number of todos in list
 }
 
 // ListWithTodosResponse represents a list with its todos

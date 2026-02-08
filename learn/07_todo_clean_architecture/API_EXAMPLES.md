@@ -647,6 +647,95 @@ curl -X POST http://localhost:8080/api/v1/lists/62ff611b-b155-47f2-9476-cd4a0cad
 
 ---
 
+### Share List with Another User (with auto-generated name)
+```bash
+curl -X POST http://localhost:8080/api/v1/lists/62ff611b-b155-47f2-9476-cd4a0cad400c/share \
+  -H "Authorization: Bearer [TOKEN]" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_user_id": "f8d2b1c4-3e6a-4f9b-8c7d-1a2b3c4d5e6f"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "a1b2c3d4-e5f6-4789-b0c1-d2e3f4a5b6c7",
+    "user_id": "f8d2b1c4-3e6a-4f9b-8c7d-1a2b3c4d5e6f",
+    "name": "Work Projects (from testuser1)",
+    "created_at": "2026-02-09T14:30:00.123456789+05:30",
+    "updated_at": "2026-02-09T14:30:00.123456789+05:30",
+    "todos": [
+      {
+        "id": "b2c3d4e5-f6a7-4890-c1d2-e3f4a5b6c7d8",
+        "title": "Review pull requests",
+        "description": "",
+        "completed": false,
+        "priority": "medium",
+        "created_at": "2026-02-09T14:30:00.234567890+05:30",
+        "updated_at": "2026-02-09T14:30:00.234567890+05:30",
+        "is_overdue": false
+      },
+      {
+        "id": "c3d4e5f6-a7b8-4901-d2e3-f4a5b6c7d8e9",
+        "title": "Complete API documentation",
+        "description": "",
+        "completed": false,
+        "priority": "high",
+        "created_at": "2026-02-09T14:30:00.345678901+05:30",
+        "updated_at": "2026-02-09T14:30:00.345678901+05:30",
+        "is_overdue": false
+      }
+    ]
+  }
+}
+```
+
+---
+
+### Share List with Custom Name
+```bash
+curl -X POST http://localhost:8080/api/v1/lists/62ff611b-b155-47f2-9476-cd4a0cad400c/share \
+  -H "Authorization: Bearer [TOKEN]" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_user_id": "f8d2b1c4-3e6a-4f9b-8c7d-1a2b3c4d5e6f",
+    "custom_name": "Shared Ideas for Q1 2024"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "d4e5f6a7-b8c9-4012-e3f4-a5b6c7d8e9f0",
+    "user_id": "f8d2b1c4-3e6a-4f9b-8c7d-1a2b3c4d5e6f",
+    "name": "Shared Ideas for Q1 2024",
+    "created_at": "2026-02-09T14:35:00.123456789+05:30",
+    "updated_at": "2026-02-09T14:35:00.123456789+05:30",
+    "todos": [
+      {
+        "id": "e5f6a7b8-c9d0-4123-f4a5-b6c7d8e9f0a1",
+        "title": "Review pull requests",
+        "description": "",
+        "completed": false,
+        "priority": "medium",
+        "created_at": "2026-02-09T14:35:00.234567890+05:30",
+        "updated_at": "2026-02-09T14:35:00.234567890+05:30",
+        "is_overdue": false
+      }
+    ]
+  }
+}
+```
+
+**Note:** Sharing creates a completely independent copy of the list and todos for the target user. Changes made by either user won't affect the other's list.
+
+---
+
 ### Delete List (permanently deletes list and all todos)
 ```bash
 curl -X DELETE http://localhost:8080/api/v1/lists/03ed90f6-6998-41b3-9cd1-bd0b2dfc2db8 \

@@ -185,3 +185,41 @@ func (h *TodoListHandler) Duplicate(c *gin.Context) {
 
 	utils.Created(c, response)
 }
+
+// Share handles sharing a list with another user
+// @Summary Share a list with another user
+// @Description Creates a copy of a list with all its todos for a different user
+// @Tags lists
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "List ID"
+// @Param request body dto.ShareListRequest true "Share details"
+// @Success 201 {object} dto.ListWithTodosResponse
+// @Failure 400 {object} utils.Response
+// @Failure 403 {object} utils.Response
+// @Failure 404 {object} utils.Response
+// @Router /api/v1/lists/{id}/share [post]
+func (h *TodoListHandler) Share(c *gin.Context) {
+	userID := c.MustGet(constants.ContextUserID).(uuid.UUID)
+
+	listID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		utils.BadRequest(c, "invalid list ID")
+		return
+	}
+
+	var req dto.ShareListRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.Error(err)
+		return
+	}
+
+	response, err := h.listService.Share(c.Request.Context(), listID, userID, req.TargetUserID, req)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	utils.Created(c, response)
+}
