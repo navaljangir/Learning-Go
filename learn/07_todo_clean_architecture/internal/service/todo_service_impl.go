@@ -368,7 +368,23 @@ func (s *TodoServiceImpl) MoveTodos(ctx context.Context, userID uuid.UUID, req d
 			}
 		}
 		listIDPtr = &listID
-		// TODO: In Phase 2, verify the list exists and belongs to the user
+
+		// Authorization check: verify the list exists and belongs to the user
+		list, err := s.listRepo.FindByID(ctx, listID)
+		if err != nil {
+			return &utils.AppError{
+				Err:        utils.ErrNotFound,
+				Message:    "List not found",
+				StatusCode: 404,
+			}
+		}
+		if !list.BelongsToUser(userID) {
+			return &utils.AppError{
+				Err:        utils.ErrForbidden,
+				Message:    "Unauthorized access to this list",
+				StatusCode: 403,
+			}
+		}
 	}
 
 	// Perform the bulk update

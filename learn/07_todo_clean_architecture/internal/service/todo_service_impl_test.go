@@ -34,6 +34,7 @@ type mockTodoRepo struct {
 	createErr      error
 	findByIDErr    error
 	findByUserErr  error
+	findByListErr  error
 	updateErr      error
 	deleteErr      error
 	countByUserErr error
@@ -87,8 +88,17 @@ func (m *mockTodoRepo) FindByUserID(_ context.Context, userID uuid.UUID, limit, 
 	return result[offset:end], nil
 }
 
-func (m *mockTodoRepo) FindByListID(_ context.Context, _ uuid.UUID) ([]*entity.Todo, error) {
-	return nil, nil
+func (m *mockTodoRepo) FindByListID(_ context.Context, listID uuid.UUID) ([]*entity.Todo, error) {
+	if m.findByListErr != nil {
+		return nil, m.findByListErr
+	}
+	var result []*entity.Todo
+	for _, todo := range m.todos {
+		if todo.ListID != nil && *todo.ListID == listID {
+			result = append(result, todo)
+		}
+	}
+	return result, nil
 }
 
 func (m *mockTodoRepo) FindWithFilters(_ context.Context, _ repository.TodoFilter, _, _ int) ([]*entity.Todo, error) {
@@ -150,7 +160,11 @@ func (m *mockTodoRepo) UpdateListID(_ context.Context, _ []uuid.UUID, _ *uuid.UU
 type mockListRepo struct {
 	lists map[uuid.UUID]*entity.TodoList
 
-	findByIDErr error
+	findByIDErr   error
+	findByUserErr error
+	createErr     error
+	updateErr     error
+	deleteErr     error
 }
 
 func newMockListRepo() *mockListRepo {
@@ -160,6 +174,9 @@ func newMockListRepo() *mockListRepo {
 }
 
 func (m *mockListRepo) Create(_ context.Context, list *entity.TodoList) error {
+	if m.createErr != nil {
+		return m.createErr
+	}
 	m.lists[list.ID] = list
 	return nil
 }
@@ -175,16 +192,31 @@ func (m *mockListRepo) FindByID(_ context.Context, id uuid.UUID) (*entity.TodoLi
 	return list, nil
 }
 
-func (m *mockListRepo) FindByUserID(_ context.Context, _ uuid.UUID) ([]*entity.TodoList, error) {
-	return nil, nil
+func (m *mockListRepo) FindByUserID(_ context.Context, userID uuid.UUID) ([]*entity.TodoList, error) {
+	if m.findByUserErr != nil {
+		return nil, m.findByUserErr
+	}
+	var result []*entity.TodoList
+	for _, list := range m.lists {
+		if list.UserID == userID && !list.IsDeleted() {
+			result = append(result, list)
+		}
+	}
+	return result, nil
 }
 
 func (m *mockListRepo) Update(_ context.Context, list *entity.TodoList) error {
+	if m.updateErr != nil {
+		return m.updateErr
+	}
 	m.lists[list.ID] = list
 	return nil
 }
 
 func (m *mockListRepo) Delete(_ context.Context, id uuid.UUID) error {
+	if m.deleteErr != nil {
+		return m.deleteErr
+	}
 	delete(m.lists, id)
 	return nil
 }
@@ -879,11 +911,13 @@ func TestMoveTodos(t *testing.T) {
 
 	t.Run("success: move todos to a list", func(t *testing.T) {
 		todoRepo := newMockTodoRepo()
-		svc := NewTodoService(todoRepo, newMockListRepo())
+		listRepo := newMockListRepo()
+		svc := NewTodoService(todoRepo, listRepo)
 		todo1 := seedTodo(todoRepo, userID, "Task 1", false)
 		todo2 := seedTodo(todoRepo, userID, "Task 2", false)
+		list := seedList(listRepo, userID, "My List")
 
-		listID := uuid.New().String()
+		listID := list.ID.String()
 		err := svc.MoveTodos(ctx, userID, dto.MoveTodosRequest{
 			TodoIDs: []string{todo1.ID.String(), todo2.ID.String()},
 			ListID:  &listID,
@@ -963,11 +997,13 @@ func TestMoveTodos(t *testing.T) {
 
 	t.Run("fail: repo UpdateListID returns error", func(t *testing.T) {
 		todoRepo := newMockTodoRepo()
+		listRepo := newMockListRepo()
 		todoRepo.updateListErr = errors.New("bulk update failed")
-		svc := NewTodoService(todoRepo, newMockListRepo())
+		svc := NewTodoService(todoRepo, listRepo)
 		todo := seedTodo(todoRepo, userID, "Task", false)
+		list := seedList(listRepo, userID, "My List")
 
-		listID := uuid.New().String()
+		listID := list.ID.String()
 		err := svc.MoveTodos(ctx, userID, dto.MoveTodosRequest{
 			TodoIDs: []string{todo.ID.String()},
 			ListID:  &listID,
@@ -987,5 +1023,36 @@ func TestMoveTodos(t *testing.T) {
 		})
 
 		assertAppError(t, err, 403, "Unauthorized access to one or more todos")
+	})
+
+	t.Run("fail: list does not exist", func(t *testing.T) {
+		todoRepo := newMockTodoRepo()
+		listRepo := newMockListRepo()
+		svc := NewTodoService(todoRepo, listRepo)
+		todo := seedTodo(todoRepo, userID, "Task", false)
+
+		nonExistentListID := uuid.New().String()
+		err := svc.MoveTodos(ctx, userID, dto.MoveTodosRequest{
+			TodoIDs: []string{todo.ID.String()},
+			ListID:  &nonExistentListID,
+		})
+
+		assertAppError(t, err, 404, "List not found")
+	})
+
+	t.Run("fail: list belongs to different user", func(t *testing.T) {
+		todoRepo := newMockTodoRepo()
+		listRepo := newMockListRepo()
+		svc := NewTodoService(todoRepo, listRepo)
+		todo := seedTodo(todoRepo, userID, "My task", false)
+		otherUserList := seedList(listRepo, otherUserID, "Other's list")
+
+		otherListIDStr := otherUserList.ID.String()
+		err := svc.MoveTodos(ctx, userID, dto.MoveTodosRequest{
+			TodoIDs: []string{todo.ID.String()},
+			ListID:  &otherListIDStr,
+		})
+
+		assertAppError(t, err, 403, "Unauthorized access to this list")
 	})
 }
