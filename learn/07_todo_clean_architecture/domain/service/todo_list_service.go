@@ -31,8 +31,13 @@ type TodoListService interface {
 	// Returns error if list doesn't exist or user is not authorized
 	Duplicate(ctx context.Context, listID, userID uuid.UUID) (*dto.ListWithTodosResponse, error)
 
-	// Share creates a copy of a list with all its todos for a different user
-	// This allows users to share their lists with others by creating independent copies
-	// Returns error if list doesn't exist, user is not authorized, or target user doesn't exist
-	Share(ctx context.Context, listID, ownerUserID, targetUserID uuid.UUID, req dto.ShareListRequest) (*dto.ListWithTodosResponse, error)
+	// GenerateShareLink generates a shareable URL with a random token for a list
+	// If the list already has a token, returns the existing one (idempotent)
+	// Returns error if list doesn't exist or user is not the owner
+	GenerateShareLink(ctx context.Context, listID, userID uuid.UUID) (*dto.ShareLinkResponse, error)
+
+	// ImportSharedList imports a shared list (and its todos) into the caller's account
+	// Creates a new independent copy of the list and all its todos
+	// Returns error if token is invalid or caller is the list owner
+	ImportSharedList(ctx context.Context, token string, userID uuid.UUID) (*dto.ListWithTodosResponse, error)
 }

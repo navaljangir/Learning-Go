@@ -4,18 +4,20 @@ import "github.com/gin-gonic/gin"
 
 // MockTodoListHandler is a fake handler for testing list operations
 type MockTodoListHandler struct {
-	CreateCalled    bool
-	ListCalled      bool
-	GetByIDCalled   bool
-	UpdateCalled    bool
-	DeleteCalled    bool
-	DuplicateCalled bool
-	ShareCalled     bool
+	CreateCalled          bool
+	ListCalled            bool
+	GetByIDCalled         bool
+	UpdateCalled          bool
+	DeleteCalled          bool
+	DuplicateCalled       bool
+	GenerateShareCalled   bool
+	ImportSharedCalled    bool
 
-	CreateCount    int
-	ListCount      int
-	DuplicateCount int
-	ShareCount     int
+	CreateCount          int
+	ListCount            int
+	DuplicateCount       int
+	GenerateShareCount   int
+	ImportSharedCount    int
 }
 
 // NewMockTodoListHandler creates a new mock todo list handler
@@ -97,15 +99,25 @@ func (m *MockTodoListHandler) Duplicate(c *gin.Context) {
 	})
 }
 
-// Share implements TodoListHandlerInterface.Share
-func (m *MockTodoListHandler) Share(c *gin.Context) {
-	m.ShareCalled = true
-	m.ShareCount++
+// GenerateShareLink implements TodoListHandlerInterface.GenerateShareLink
+func (m *MockTodoListHandler) GenerateShareLink(c *gin.Context) {
+	m.GenerateShareCalled = true
+	m.GenerateShareCount++
+
+	c.JSON(200, gin.H{
+		"share_url":   "/api/v1/lists/import/abc123token",
+		"share_token": "abc123token",
+	})
+}
+
+// ImportSharedList implements TodoListHandlerInterface.ImportSharedList
+func (m *MockTodoListHandler) ImportSharedList(c *gin.Context) {
+	m.ImportSharedCalled = true
+	m.ImportSharedCount++
 
 	c.JSON(201, gin.H{
-		"id":      "mock-shared-list-id",
-		"name":    "Mock List (from testuser)",
-		"user_id": "mock-target-user-id",
-		"todos":   []gin.H{},
+		"id":    "mock-imported-list-id",
+		"name":  "Mock List (shared)",
+		"todos": []gin.H{},
 	})
 }

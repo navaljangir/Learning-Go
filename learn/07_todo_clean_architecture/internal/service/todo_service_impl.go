@@ -15,14 +15,15 @@ import (
 // TodoServiceImpl implements todo-related business logic
 type TodoServiceImpl struct {
 	todoRepo repository.TodoRepository
+	listRepo repository.TodoListRepository
 }
 
 // Compile-time check to ensure TodoServiceImpl implements TodoService interface
 var _ domainService.TodoService = (*TodoServiceImpl)(nil)
 
 // NewTodoService creates a new todo service
-func NewTodoService(todoRepo repository.TodoRepository) domainService.TodoService {
-	return &TodoServiceImpl{todoRepo: todoRepo}
+func NewTodoService(todoRepo repository.TodoRepository, listRepo repository.TodoListRepository) domainService.TodoService {
+	return &TodoServiceImpl{todoRepo: todoRepo, listRepo: listRepo}
 }
 
 // Create creates a new todo
@@ -37,6 +38,14 @@ func (s *TodoServiceImpl) Create(ctx context.Context, userID uuid.UUID, req dto.
 	if req.Completed {
 		// If creating as completed, set completed status
 		if req.CompletedAt != nil {
+			// Validate: completed_at must not be in the future
+			if req.CompletedAt.After(time.Now()) {
+				return nil, &utils.AppError{
+					Err:        utils.ErrBadRequest,
+					Message:    "completed_at cannot be in the future",
+					StatusCode: 400,
+				}
+			}
 			// Use provided completion date
 			todo.Completed = true
 			todo.CompletedAt = req.CompletedAt
@@ -56,8 +65,14 @@ func (s *TodoServiceImpl) Create(ctx context.Context, userID uuid.UUID, req dto.
 				StatusCode: 400,
 			}
 		}
-		todo.ListID = &listID
-		// TODO: Verify list exists and belongs to user
+
+		// Verify list exists and belongs to user
+		// If list doesn't exist or belongs to another user, create as global todo
+		list, err := s.listRepo.FindByID(ctx, listID)
+		if err == nil && list.BelongsToUser(userID) {
+			todo.ListID = &listID
+		}
+		// else: silently skip — todo is created without a list (global)
 	}
 
 	// Save to database
@@ -187,6 +202,14 @@ func (s *TodoServiceImpl) Update(ctx context.Context, todoID, userID uuid.UUID, 
 		if *req.Completed {
 			// Mark as completed
 			if req.CompletedAt != nil {
+				// Validate: completed_at must not be in the future
+				if req.CompletedAt.After(time.Now()) {
+					return nil, &utils.AppError{
+						Err:        utils.ErrBadRequest,
+						Message:    "completed_at cannot be in the future",
+						StatusCode: 400,
+					}
+				}
 				// Use provided completion date
 				todo.Completed = true
 				todo.CompletedAt = req.CompletedAt

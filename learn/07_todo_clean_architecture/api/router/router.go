@@ -78,7 +78,8 @@ func SetupRouter(
 				lists.PUT("/:id", listHandler.Update)
 				lists.DELETE("/:id", listHandler.Delete)
 				lists.POST("/:id/duplicate", listHandler.Duplicate)
-				lists.POST("/:id/share", listHandler.Share)
+				lists.POST("/:id/share", listHandler.GenerateShareLink)
+				lists.POST("/import/:token", listHandler.ImportSharedList)
 			}
 		}
 	}

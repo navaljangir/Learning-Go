@@ -17,10 +17,10 @@ type UpdateListRequest struct {
 	Name string `json:"name" binding:"required,min=1,max=100"`
 }
 
-// ShareListRequest represents a request to share a list with another user
-type ShareListRequest struct {
-	TargetUserID uuid.UUID `json:"target_user_id" binding:"required"`
-	CustomName   string    `json:"custom_name,omitempty"` // Optional: custom name for shared list
+// ShareLinkResponse represents the response when generating a share link
+type ShareLinkResponse struct {
+	ShareURL   string `json:"share_url"`
+	ShareToken string `json:"share_token"`
 }
 
 // ListResponse represents a list in API responses

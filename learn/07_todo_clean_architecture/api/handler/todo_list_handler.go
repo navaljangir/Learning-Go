@@ -186,21 +186,19 @@ func (h *TodoListHandler) Duplicate(c *gin.Context) {
 	utils.Created(c, response)
 }
 
-// Share handles sharing a list with another user
-// @Summary Share a list with another user
-// @Description Creates a copy of a list with all its todos for a different user
+// GenerateShareLink handles generating a shareable URL for a list
+// @Summary Generate a share link for a list
+// @Description Creates an HMAC-signed token that can be used to import this list
 // @Tags lists
-// @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "List ID"
-// @Param request body dto.ShareListRequest true "Share details"
-// @Success 201 {object} dto.ListWithTodosResponse
+// @Success 200 {object} dto.ShareLinkResponse
 // @Failure 400 {object} utils.Response
 // @Failure 403 {object} utils.Response
 // @Failure 404 {object} utils.Response
 // @Router /api/v1/lists/{id}/share [post]
-func (h *TodoListHandler) Share(c *gin.Context) {
+func (h *TodoListHandler) GenerateShareLink(c *gin.Context) {
 	userID := c.MustGet(constants.ContextUserID).(uuid.UUID)
 
 	listID, err := uuid.Parse(c.Param("id"))
@@ -209,13 +207,36 @@ func (h *TodoListHandler) Share(c *gin.Context) {
 		return
 	}
 
-	var req dto.ShareListRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	response, err := h.listService.GenerateShareLink(c.Request.Context(), listID, userID)
+	if err != nil {
 		c.Error(err)
 		return
 	}
 
-	response, err := h.listService.Share(c.Request.Context(), listID, userID, req.TargetUserID, req)
+	utils.Success(c, response)
+}
+
+// ImportSharedList handles importing a shared list via token
+// @Summary Import a shared list
+// @Description Copies a shared list and its todos into the caller's account
+// @Tags lists
+// @Produce json
+// @Security BearerAuth
+// @Param token path string true "Share token"
+// @Success 201 {object} dto.ListWithTodosResponse
+// @Failure 400 {object} utils.Response
+// @Failure 404 {object} utils.Response
+// @Router /api/v1/lists/import/{token} [post]
+func (h *TodoListHandler) ImportSharedList(c *gin.Context) {
+	userID := c.MustGet(constants.ContextUserID).(uuid.UUID)
+
+	token := c.Param("token")
+	if token == "" {
+		utils.BadRequest(c, "share token is required")
+		return
+	}
+
+	response, err := h.listService.ImportSharedList(c.Request.Context(), token, userID)
 	if err != nil {
 		c.Error(err)
 		return

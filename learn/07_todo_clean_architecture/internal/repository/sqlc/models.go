@@ -9,6 +9,15 @@ import (
 	"time"
 )
 
+type ListShare struct {
+	ID           string    `json:"id"`
+	SourceListID string    `json:"source_list_id"`
+	SourceUserID string    `json:"source_user_id"`
+	TargetListID string    `json:"target_list_id"`
+	TargetUserID string    `json:"target_user_id"`
+	SharedAt     time.Time `json:"shared_at"`
+}
+
 type Todo struct {
 	ID          string         `json:"id"`
 	UserID      string         `json:"user_id"`

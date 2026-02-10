@@ -56,7 +56,7 @@ func main() {
 	jwtUtil := initJWT(cfg)
 
 	// Initialize services (Application layer)
-	userService, todoService, listService := initServices(userRepo, todoRepo, listRepo, jwtUtil)
+	userService, todoService, listService := initServices(userRepo, todoRepo, listRepo, jwtUtil, cfg.JWT.Secret)
 
 	// Initialize handlers (Presentation layer)
 	authHandler, userHandler, todoHandler, listHandler := initHandlers(userService, todoService, listService)
@@ -118,10 +118,11 @@ func initServices(
 	todoRepo repository.TodoRepository,
 	listRepo repository.TodoListRepository,
 	jwtUtil *utils.JWTUtil,
+	shareSecret string,
 ) (service.UserService, service.TodoService, service.TodoListService) {
 	userService := serviceImpl.NewUserService(userRepo, jwtUtil)
-	todoService := serviceImpl.NewTodoService(todoRepo)
-	listService := serviceImpl.NewTodoListService(listRepo, todoRepo, userRepo)
+	todoService := serviceImpl.NewTodoService(todoRepo, listRepo)
+	listService := serviceImpl.NewTodoListService(listRepo, todoRepo, userRepo, shareSecret)
 	log.Println("[OK] Services initialized")
 	return userService, todoService, listService
 }
@@ -204,6 +205,8 @@ func printStartupBanner(cfg *config.Config) {
 	log.Println("    PUT    /api/v1/lists/:id          - Update list (rename)")
 	log.Println("    DELETE /api/v1/lists/:id          - Delete list")
 	log.Println("    POST   /api/v1/lists/:id/duplicate - Duplicate list")
+	log.Println("    POST   /api/v1/lists/:id/share    - Generate share link")
+	log.Println("    POST   /api/v1/lists/import/:token - Import shared list")
 	log.Println("\n" + separator)
 	log.Printf("Environment: %s", cfg.Server.Environment)
 	log.Printf("Database: %s@%s:%s/%s", cfg.Database.User, cfg.Database.Host, cfg.Database.Port, cfg.Database.DBName)

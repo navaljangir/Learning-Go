@@ -46,35 +46,3 @@ func Unauthorized(c *gin.Context, message string) {
 	})
 }
 
-// Forbidden sends a forbidden response
-func Forbidden(c *gin.Context, message string) {
-	c.JSON(http.StatusForbidden, Response{
-		Success: false,
-		Error:   message,
-	})
-}
-
-// NotFound sends a not found response
-func NotFound(c *gin.Context, message string) {
-	c.JSON(http.StatusNotFound, Response{
-		Success: false,
-		Error:   message,
-	})
-}
-
-// InternalError sends an internal server error response
-func InternalError(c *gin.Context, message string) {
-	c.JSON(http.StatusInternalServerError, Response{
-		Success: false,
-		Error:   message,
-	})
-}
-
-// ValidationError sends a validation error response
-func ValidationError(c *gin.Context, errors interface{}) {
-	c.JSON(http.StatusUnprocessableEntity, Response{
-		Success: false,
-		Error:   "validation failed",
-		Data:    errors,
-	})
-}

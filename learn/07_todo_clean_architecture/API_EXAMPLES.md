@@ -35,10 +35,10 @@ curl -X POST http://localhost:8080/api/v1/auth/register \
       "username": "testuser1",
       "email": "test1@example.com",
       "full_name": "Test User",
-      "created_at": "2026-02-05T16:37:42.188692504+05:30",
-      "updated_at": "2026-02-05T16:37:42.188692504+05:30"
+      "created_at": "2026-02-09T12:05:10.188692504+05:30",
+      "updated_at": "2026-02-09T12:05:10.188692504+05:30"
     },
-    "expires_at": 1770376062
+    "expires_at": 1770705310
   }
 }
 ```
@@ -66,10 +66,10 @@ curl -X POST http://localhost:8080/api/v1/auth/login \
       "username": "testuser1",
       "email": "test1@example.com",
       "full_name": "Test User",
-      "created_at": "2026-02-05T11:07:42Z",
-      "updated_at": "2026-02-05T11:07:42Z"
+      "created_at": "2026-02-09T06:35:10Z",
+      "updated_at": "2026-02-09T06:35:10Z"
     },
-    "expires_at": 1770376067
+    "expires_at": 1770705315
   }
 }
 ```
@@ -93,8 +93,8 @@ curl -X GET http://localhost:8080/api/v1/users/profile \
     "username": "testuser1",
     "email": "test1@example.com",
     "full_name": "Test User",
-    "created_at": "2026-02-05T11:07:42Z",
-    "updated_at": "2026-02-05T11:07:42Z"
+    "created_at": "2026-02-09T06:35:10Z",
+    "updated_at": "2026-02-09T06:35:10Z"
   }
 }
 ```
@@ -124,8 +124,8 @@ curl -X POST http://localhost:8080/api/v1/todos \
     "description": "",
     "completed": false,
     "priority": "medium",
-    "created_at": "2026-02-05T16:38:12.912501402+05:30",
-    "updated_at": "2026-02-05T16:38:12.912501402+05:30",
+    "created_at": "2026-02-09T12:05:20.912501402+05:30",
+    "updated_at": "2026-02-09T12:05:20.912501402+05:30",
     "is_overdue": false
   }
 }
@@ -142,7 +142,7 @@ curl -X POST http://localhost:8080/api/v1/todos \
     "title": "Complete project documentation",
     "description": "Write API docs and user guide",
     "priority": "high",
-    "due_date": "2024-01-20T17:00:00Z",
+    "due_date": "2026-02-08T11:30:00Z",
     "completed": false,
     "list_id": "62ff611b-b155-47f2-9476-cd4a0cad400c"
   }'
@@ -160,9 +160,9 @@ curl -X POST http://localhost:8080/api/v1/todos \
     "description": "Write API docs and user guide",
     "completed": false,
     "priority": "high",
-    "due_date": "2024-01-20T17:00:00Z",
-    "created_at": "2026-02-05T16:38:12.912501402+05:30",
-    "updated_at": "2026-02-05T16:38:12.912501402+05:30",
+    "due_date": "2026-02-08T11:30:00Z",
+    "created_at": "2026-02-09T12:05:20.912501402+05:30",
+    "updated_at": "2026-02-09T12:05:20.912501402+05:30",
     "is_overdue": true
   }
 }
@@ -180,7 +180,7 @@ curl -X POST http://localhost:8080/api/v1/todos \
     "description": "Install Go, MySQL, and configure project",
     "priority": "high",
     "completed": true,
-    "completed_at": "2024-01-10T14:30:00Z"
+    "completed_at": "2026-02-08T09:00:00Z"
   }'
 ```
 
@@ -194,9 +194,9 @@ curl -X POST http://localhost:8080/api/v1/todos \
     "description": "Install Go, MySQL, and configure project",
     "completed": true,
     "priority": "high",
-    "created_at": "2026-02-05T16:38:12.912501402+05:30",
-    "updated_at": "2026-02-05T16:38:12.912501402+05:30",
-    "completed_at": "2024-01-10T14:30:00Z",
+    "created_at": "2026-02-09T12:05:20.912501402+05:30",
+    "updated_at": "2026-02-09T12:05:20.912501402+05:30",
+    "completed_at": "2026-02-08T09:00:00Z",
     "is_overdue": false
   }
 }
@@ -226,8 +226,8 @@ curl -X POST http://localhost:8080/api/v1/todos \
     "description": "",
     "completed": false,
     "priority": "high",
-    "created_at": "2026-02-05T16:38:43.764271555+05:30",
-    "updated_at": "2026-02-05T16:38:43.764271555+05:30",
+    "created_at": "2026-02-09T12:05:30.764271555+05:30",
+    "updated_at": "2026-02-09T12:05:30.764271555+05:30",
     "is_overdue": false
   }
 }
@@ -253,8 +253,8 @@ curl -X GET "http://localhost:8080/api/v1/todos" \
         "description": "",
         "completed": false,
         "priority": "high",
-        "created_at": "2026-02-05T11:08:15Z",
-        "updated_at": "2026-02-05T11:08:15Z",
+        "created_at": "2026-02-09T06:35:15Z",
+        "updated_at": "2026-02-09T06:35:15Z",
         "is_overdue": false
       },
       {
@@ -263,8 +263,8 @@ curl -X GET "http://localhost:8080/api/v1/todos" \
         "description": "Milk, eggs, bread",
         "completed": false,
         "priority": "medium",
-        "created_at": "2026-02-05T11:08:13Z",
-        "updated_at": "2026-02-05T11:08:13Z",
+        "created_at": "2026-02-09T06:35:13Z",
+        "updated_at": "2026-02-09T06:35:13Z",
         "is_overdue": false
       }
     ],
@@ -294,8 +294,8 @@ curl -X GET http://localhost:8080/api/v1/todos/2a97f648-c496-4703-90ef-b094ac34c
     "description": "Milk, eggs, bread",
     "completed": false,
     "priority": "medium",
-    "created_at": "2026-02-05T11:08:13Z",
-    "updated_at": "2026-02-05T11:08:13Z",
+    "created_at": "2026-02-09T06:35:13Z",
+    "updated_at": "2026-02-09T06:35:13Z",
     "is_overdue": false
   }
 }
@@ -323,8 +323,8 @@ curl -X PUT http://localhost:8080/api/v1/todos/2a97f648-c496-4703-90ef-b094ac34c
     "description": "Milk, eggs, bread",
     "completed": false,
     "priority": "medium",
-    "created_at": "2026-02-05T11:08:13Z",
-    "updated_at": "2026-02-05T16:38:38.342140887+05:30",
+    "created_at": "2026-02-09T06:35:13Z",
+    "updated_at": "2026-02-09T12:05:38.342140887+05:30",
     "is_overdue": false
   }
 }
@@ -341,7 +341,7 @@ curl -X PUT http://localhost:8080/api/v1/todos/2a97f648-c496-4703-90ef-b094ac34c
     "title": "Buy groceries, fruits, and vegetables",
     "description": "Milk, eggs, bread, apples, carrots",
     "priority": "high",
-    "due_date": "2024-01-16T18:00:00Z"
+    "due_date": "2026-02-08T12:30:00Z"
   }'
 ```
 
@@ -355,9 +355,9 @@ curl -X PUT http://localhost:8080/api/v1/todos/2a97f648-c496-4703-90ef-b094ac34c
     "description": "Milk, eggs, bread, apples, carrots",
     "completed": false,
     "priority": "high",
-    "due_date": "2024-01-16T18:00:00Z",
-    "created_at": "2026-02-05T11:08:13Z",
-    "updated_at": "2026-02-05T16:40:00.342140887+05:30",
+    "due_date": "2026-02-08T12:30:00Z",
+    "created_at": "2026-02-09T06:35:13Z",
+    "updated_at": "2026-02-09T12:05:55.342140887+05:30",
     "is_overdue": true
   }
 }
@@ -372,7 +372,7 @@ curl -X PUT http://localhost:8080/api/v1/todos/2a97f648-c496-4703-90ef-b094ac34c
   -H "Authorization: Bearer [TOKEN]" \
   -d '{
     "completed": true,
-    "completed_at": "2024-01-15T12:00:00Z"
+    "completed_at": "2026-02-08T06:30:00Z"
   }'
 ```
 
@@ -386,10 +386,10 @@ curl -X PUT http://localhost:8080/api/v1/todos/2a97f648-c496-4703-90ef-b094ac34c
     "description": "Milk, eggs, bread, apples, carrots",
     "completed": true,
     "priority": "high",
-    "due_date": "2024-01-16T18:00:00Z",
-    "created_at": "2026-02-05T11:08:13Z",
-    "updated_at": "2026-02-05T16:41:00.342140887+05:30",
-    "completed_at": "2024-01-15T12:00:00Z",
+    "due_date": "2026-02-08T12:30:00Z",
+    "created_at": "2026-02-09T06:35:13Z",
+    "updated_at": "2026-02-09T12:05:57.342140887+05:30",
+    "completed_at": "2026-02-08T06:30:00Z",
     "is_overdue": false
   }
 }
@@ -417,9 +417,9 @@ curl -X PUT http://localhost:8080/api/v1/todos/2a97f648-c496-4703-90ef-b094ac34c
     "description": "Milk, eggs, bread, apples, carrots",
     "completed": false,
     "priority": "high",
-    "due_date": "2024-01-16T18:00:00Z",
-    "created_at": "2026-02-05T11:08:13Z",
-    "updated_at": "2026-02-05T16:42:00.342140887+05:30",
+    "due_date": "2026-02-08T12:30:00Z",
+    "created_at": "2026-02-09T06:35:13Z",
+    "updated_at": "2026-02-09T12:05:59.342140887+05:30",
     "is_overdue": true
   }
 }
@@ -443,9 +443,9 @@ curl -X PATCH http://localhost:8080/api/v1/todos/2a97f648-c496-4703-90ef-b094ac3
     "description": "Milk, eggs, bread",
     "completed": true,
     "priority": "medium",
-    "created_at": "2026-02-05T11:08:13Z",
-    "updated_at": "2026-02-05T16:38:41.17774522+05:30",
-    "completed_at": "2026-02-05T16:38:41.17774522+05:30",
+    "created_at": "2026-02-09T06:35:13Z",
+    "updated_at": "2026-02-09T12:05:41.17774522+05:30",
+    "completed_at": "2026-02-09T12:05:41.17774522+05:30",
     "is_overdue": false
   }
 }
@@ -491,8 +491,8 @@ curl -X POST http://localhost:8080/api/v1/lists \
     "id": "62ff611b-b155-47f2-9476-cd4a0cad400c",
     "user_id": "ee293d6f-a11d-4f80-8eea-efd01a047383",
     "name": "Work Projects",
-    "created_at": "2026-02-05T16:38:12.302840949+05:30",
-    "updated_at": "2026-02-05T16:38:12.302840949+05:30"
+    "created_at": "2026-02-09T12:05:12.302840949+05:30",
+    "updated_at": "2026-02-09T12:05:12.302840949+05:30"
   }
 }
 ```
@@ -515,15 +515,15 @@ curl -X GET http://localhost:8080/api/v1/lists \
         "id": "03ed90f6-6998-41b3-9cd1-bd0b2dfc2db8",
         "user_id": "ee293d6f-a11d-4f80-8eea-efd01a047383",
         "name": "Personal Tasks",
-        "created_at": "2026-02-05T11:08:14Z",
-        "updated_at": "2026-02-05T11:08:14Z"
+        "created_at": "2026-02-09T06:35:14Z",
+        "updated_at": "2026-02-09T06:35:14Z"
       },
       {
         "id": "62ff611b-b155-47f2-9476-cd4a0cad400c",
         "user_id": "ee293d6f-a11d-4f80-8eea-efd01a047383",
         "name": "Work Projects",
-        "created_at": "2026-02-05T11:08:12Z",
-        "updated_at": "2026-02-05T11:08:12Z"
+        "created_at": "2026-02-09T06:35:12Z",
+        "updated_at": "2026-02-09T06:35:12Z"
       }
     ],
     "total": 2
@@ -547,8 +547,8 @@ curl -X GET http://localhost:8080/api/v1/lists/62ff611b-b155-47f2-9476-cd4a0cad4
     "id": "62ff611b-b155-47f2-9476-cd4a0cad400c",
     "user_id": "ee293d6f-a11d-4f80-8eea-efd01a047383",
     "name": "Work Projects",
-    "created_at": "2026-02-05T11:08:12Z",
-    "updated_at": "2026-02-05T11:08:12Z",
+    "created_at": "2026-02-09T06:35:12Z",
+    "updated_at": "2026-02-09T06:35:12Z",
     "todos": [
       {
         "id": "fc34ab49-12f3-4536-bd43-3d62760786a3",
@@ -556,8 +556,8 @@ curl -X GET http://localhost:8080/api/v1/lists/62ff611b-b155-47f2-9476-cd4a0cad4
         "description": "",
         "completed": false,
         "priority": "medium",
-        "created_at": "2026-02-05T11:08:46Z",
-        "updated_at": "2026-02-05T11:08:46Z",
+        "created_at": "2026-02-09T06:35:46Z",
+        "updated_at": "2026-02-09T06:35:46Z",
         "is_overdue": false
       },
       {
@@ -566,8 +566,8 @@ curl -X GET http://localhost:8080/api/v1/lists/62ff611b-b155-47f2-9476-cd4a0cad4
         "description": "",
         "completed": false,
         "priority": "high",
-        "created_at": "2026-02-05T11:08:44Z",
-        "updated_at": "2026-02-05T11:08:44Z",
+        "created_at": "2026-02-09T06:35:44Z",
+        "updated_at": "2026-02-09T06:35:44Z",
         "is_overdue": false
       }
     ]
@@ -595,8 +595,8 @@ curl -X PUT http://localhost:8080/api/v1/lists/62ff611b-b155-47f2-9476-cd4a0cad4
     "id": "62ff611b-b155-47f2-9476-cd4a0cad400c",
     "user_id": "ee293d6f-a11d-4f80-8eea-efd01a047383",
     "name": "Work Projects (Updated)",
-    "created_at": "2026-02-05T11:08:12Z",
-    "updated_at": "2026-02-05T16:39:17.301021756+05:30"
+    "created_at": "2026-02-09T06:35:12Z",
+    "updated_at": "2026-02-09T12:05:50.301021756+05:30"
   }
 }
 ```
@@ -617,8 +617,8 @@ curl -X POST http://localhost:8080/api/v1/lists/62ff611b-b155-47f2-9476-cd4a0cad
     "id": "e3f6185d-5766-40e5-a9a4-e27d5da8524c",
     "user_id": "ee293d6f-a11d-4f80-8eea-efd01a047383",
     "name": "Work Projects (Updated) (Copy)",
-    "created_at": "2026-02-05T16:39:19.726317947+05:30",
-    "updated_at": "2026-02-05T16:39:19.726317947+05:30",
+    "created_at": "2026-02-09T12:05:52.726317947+05:30",
+    "updated_at": "2026-02-09T12:05:52.726317947+05:30",
     "todos": [
       {
         "id": "47cf02cd-50cb-4e45-ba84-889ea2320987",
@@ -626,8 +626,8 @@ curl -X POST http://localhost:8080/api/v1/lists/62ff611b-b155-47f2-9476-cd4a0cad
         "description": "",
         "completed": false,
         "priority": "medium",
-        "created_at": "2026-02-05T16:39:19.730020476+05:30",
-        "updated_at": "2026-02-05T16:39:19.730020476+05:30",
+        "created_at": "2026-02-09T12:05:52.730020476+05:30",
+        "updated_at": "2026-02-09T12:05:52.730020476+05:30",
         "is_overdue": false
       },
       {
@@ -636,8 +636,8 @@ curl -X POST http://localhost:8080/api/v1/lists/62ff611b-b155-47f2-9476-cd4a0cad
         "description": "",
         "completed": false,
         "priority": "high",
-        "created_at": "2026-02-05T16:39:19.73348959+05:30",
-        "updated_at": "2026-02-05T16:39:19.73348959+05:30",
+        "created_at": "2026-02-09T12:05:52.73348959+05:30",
+        "updated_at": "2026-02-09T12:05:52.73348959+05:30",
         "is_overdue": false
       }
     ]
@@ -647,14 +647,31 @@ curl -X POST http://localhost:8080/api/v1/lists/62ff611b-b155-47f2-9476-cd4a0cad
 
 ---
 
-### Share List with Another User (with auto-generated name)
+### Generate Share Link (Step 1: Owner generates a link)
 ```bash
 curl -X POST http://localhost:8080/api/v1/lists/62ff611b-b155-47f2-9476-cd4a0cad400c/share \
-  -H "Authorization: Bearer [TOKEN]" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "target_user_id": "f8d2b1c4-3e6a-4f9b-8c7d-1a2b3c4d5e6f"
-  }'
+  -H "Authorization: Bearer [TOKEN]"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "share_url": "/api/v1/lists/import/62ff611bb15547f29476cd4a0cad400ca1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+    "share_token": "62ff611bb15547f29476cd4a0cad400ca1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"
+  }
+}
+```
+
+**Note:** No request body needed. The token is an HMAC-signed encoding of the list ID — no database storage required. The same list always produces the same token, so calling this endpoint multiple times is safe.
+
+---
+
+### Import Shared List (Step 2: Friend imports with the token)
+```bash
+curl -X POST http://localhost:8080/api/v1/lists/import/62ff611bb15547f29476cd4a0cad400ca1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6 \
+  -H "Authorization: Bearer [FRIEND_TOKEN]"
 ```
 
 **Response:**
@@ -664,9 +681,9 @@ curl -X POST http://localhost:8080/api/v1/lists/62ff611b-b155-47f2-9476-cd4a0cad
   "data": {
     "id": "a1b2c3d4-e5f6-4789-b0c1-d2e3f4a5b6c7",
     "user_id": "f8d2b1c4-3e6a-4f9b-8c7d-1a2b3c4d5e6f",
-    "name": "Work Projects (from testuser1)",
-    "created_at": "2026-02-09T14:30:00.123456789+05:30",
-    "updated_at": "2026-02-09T14:30:00.123456789+05:30",
+    "name": "Work Projects (shared)",
+    "created_at": "2026-02-09T12:05:55.123456789+05:30",
+    "updated_at": "2026-02-09T12:05:55.123456789+05:30",
     "todos": [
       {
         "id": "b2c3d4e5-f6a7-4890-c1d2-e3f4a5b6c7d8",
@@ -674,8 +691,8 @@ curl -X POST http://localhost:8080/api/v1/lists/62ff611b-b155-47f2-9476-cd4a0cad
         "description": "",
         "completed": false,
         "priority": "medium",
-        "created_at": "2026-02-09T14:30:00.234567890+05:30",
-        "updated_at": "2026-02-09T14:30:00.234567890+05:30",
+        "created_at": "2026-02-09T12:05:55.234567890+05:30",
+        "updated_at": "2026-02-09T12:05:55.234567890+05:30",
         "is_overdue": false
       },
       {
@@ -684,8 +701,8 @@ curl -X POST http://localhost:8080/api/v1/lists/62ff611b-b155-47f2-9476-cd4a0cad
         "description": "",
         "completed": false,
         "priority": "high",
-        "created_at": "2026-02-09T14:30:00.345678901+05:30",
-        "updated_at": "2026-02-09T14:30:00.345678901+05:30",
+        "created_at": "2026-02-09T12:05:55.345678901+05:30",
+        "updated_at": "2026-02-09T12:05:55.345678901+05:30",
         "is_overdue": false
       }
     ]
@@ -693,46 +710,12 @@ curl -X POST http://localhost:8080/api/v1/lists/62ff611b-b155-47f2-9476-cd4a0cad
 }
 ```
 
----
-
-### Share List with Custom Name
-```bash
-curl -X POST http://localhost:8080/api/v1/lists/62ff611b-b155-47f2-9476-cd4a0cad400c/share \
-  -H "Authorization: Bearer [TOKEN]" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "target_user_id": "f8d2b1c4-3e6a-4f9b-8c7d-1a2b3c4d5e6f",
-    "custom_name": "Shared Ideas for Q1 2024"
-  }'
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "d4e5f6a7-b8c9-4012-e3f4-a5b6c7d8e9f0",
-    "user_id": "f8d2b1c4-3e6a-4f9b-8c7d-1a2b3c4d5e6f",
-    "name": "Shared Ideas for Q1 2024",
-    "created_at": "2026-02-09T14:35:00.123456789+05:30",
-    "updated_at": "2026-02-09T14:35:00.123456789+05:30",
-    "todos": [
-      {
-        "id": "e5f6a7b8-c9d0-4123-f4a5-b6c7d8e9f0a1",
-        "title": "Review pull requests",
-        "description": "",
-        "completed": false,
-        "priority": "medium",
-        "created_at": "2026-02-09T14:35:00.234567890+05:30",
-        "updated_at": "2026-02-09T14:35:00.234567890+05:30",
-        "is_overdue": false
-      }
-    ]
-  }
-}
-```
-
-**Note:** Sharing creates a completely independent copy of the list and todos for the target user. Changes made by either user won't affect the other's list.
+**How sharing works:**
+1. Owner calls `POST /api/v1/lists/:id/share` → gets a share token (HMAC-signed, no DB storage)
+2. Owner sends the URL to a friend
+3. Friend calls `POST /api/v1/lists/import/:token` → list + todos are copied to their account
+4. The import creates a completely independent copy — changes by either user won't affect the other
+5. You cannot import your own list (use duplicate instead)
 
 ---
 
@@ -834,9 +817,9 @@ curl -X PATCH http://localhost:8080/api/v1/todos/move \
 | `title` | string | **Yes** | Todo title (1-255 chars) | `"Buy groceries"` |
 | `description` | string | No | Detailed description (max 2000 chars) | `"Need milk and eggs"` |
 | `priority` | string | **Yes** | Priority: `low`, `medium`, `high`, `urgent` | `"high"` |
-| `due_date` | ISO 8601 | No | When todo is due | `"2024-01-20T17:00:00Z"` |
+| `due_date` | ISO 8601 | No | When todo is due | `"2026-02-10T11:30:00Z"` |
 | `completed` | boolean | No | Create as completed (default: false) | `true` |
-| `completed_at` | ISO 8601 | No | Completion date (only if completed=true) | `"2024-01-15T12:00:00Z"` |
+| `completed_at` | ISO 8601 | No | Completion date (only if completed=true) | `"2026-02-08T06:30:00Z"` |
 | `list_id` | UUID string | No | Assign to a list (null = global) | `"550e8400-e29b-..."` |
 
 ### UpdateTodoRequest Fields
@@ -848,9 +831,9 @@ All fields are **optional** - only provided fields will be updated.
 | `title` | string | No | Update title (1-255 chars) | `"Buy groceries"` |
 | `description` | string | No | Update description (max 2000 chars) | `"Need milk and eggs"` |
 | `priority` | string | No | Update priority: `low`, `medium`, `high`, `urgent` | `"high"` |
-| `due_date` | ISO 8601 | No | Update due date (null = remove) | `"2024-01-20T17:00:00Z"` |
+| `due_date` | ISO 8601 | No | Update due date (null = remove) | `"2026-02-10T11:30:00Z"` |
 | `completed` | boolean | No | Update completion status | `true` |
-| `completed_at` | ISO 8601 | No | Update completion date | `"2024-01-15T12:00:00Z"` |
+| `completed_at` | ISO 8601 | No | Update completion date | `"2026-02-08T06:30:00Z"` |
 
 ### Priority Values
 
@@ -862,8 +845,8 @@ All fields are **optional** - only provided fields will be updated.
 ### Date Format
 
 All dates must be in **ISO 8601** format with timezone:
-- `2024-01-20T17:00:00Z` (UTC)
-- `2024-01-20T17:00:00+05:30` (with timezone offset)
+- `2026-02-09T06:35:00Z` (UTC)
+- `2026-02-09T12:05:00+05:30` (with timezone offset)
 
 ### Notes
 

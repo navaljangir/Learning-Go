@@ -68,6 +68,9 @@ type TodoListHandlerInterface interface {
 	// Duplicate creates a copy of a list with all its todos
 	Duplicate(c *gin.Context)
 
-	// Share creates a copy of a list with all its todos for another user
-	Share(c *gin.Context)
+	// GenerateShareLink generates a shareable URL token for a list
+	GenerateShareLink(c *gin.Context)
+
+	// ImportSharedList imports a shared list via token into the caller's account
+	ImportSharedList(c *gin.Context)
 }

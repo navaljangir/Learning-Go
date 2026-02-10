@@ -28,7 +28,7 @@ func NewAuthHandler(userService service.UserService) AuthHandlerInterface {
 // @Produce json
 // @Param request body dto.RegisterRequest true "Registration details"
 // @Success 201 {object} dto.LoginResponse
-// @Failure 400 {object} utils.Response
+// @Failure 400 {object} utils.Response	
 // @Router /api/v1/auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req dto.RegisterRequest
