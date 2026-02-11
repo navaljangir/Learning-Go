@@ -52,3 +52,25 @@ func (e *AppError) Error() string {
 func (e *AppError) Unwrap() error {
 	return e.Err
 }
+
+// ValidationError represents a validation failure with per-field details.
+// Handlers pass binding/validation errors through c.Error(), and the
+// ErrorHandlerMiddleware detects this type to return a 400 with field info.
+//
+// Usage in handlers:
+//   c.Error(err)  // middleware auto-detects validator.ValidationErrors
+//
+// Usage for custom validation:
+//   c.Error(&utils.ValidationError{Message: "Validation failed", Fields: map[string]string{"email": "invalid"}})
+type ValidationError struct {
+	Message string            // Top-level message (e.g. "Validation failed")
+	Fields  map[string]string // Per-field error messages
+}
+
+// Error implements the error interface
+func (e *ValidationError) Error() string {
+	if e.Message != "" {
+		return e.Message
+	}
+	return "validation error"
+}

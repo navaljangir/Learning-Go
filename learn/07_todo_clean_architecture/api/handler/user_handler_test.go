@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
+	"todo_app/api/middleware"
 	"todo_app/internal/dto"
 	"todo_app/pkg/constants"
 	"todo_app/pkg/utils"
@@ -26,22 +27,7 @@ func setupUserTestRouter(userService *mockUserService) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 	router.Use(gin.Recovery())
-
-	// Add error handler middleware
-	router.Use(func(c *gin.Context) {
-		c.Next()
-
-		if len(c.Errors) > 0 {
-			err := c.Errors.Last().Err
-			var appErr *utils.AppError
-			if errors.As(err, &appErr) {
-				c.JSON(appErr.StatusCode, gin.H{"error": appErr.Message})
-			} else {
-				c.JSON(500, gin.H{"error": err.Error()})
-			}
-			c.Abort()
-		}
-	})
+	router.Use(middleware.ErrorHandlerMiddleware())
 
 	handler := NewUserHandler(userService)
 

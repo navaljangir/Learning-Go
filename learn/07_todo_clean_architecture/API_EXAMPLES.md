@@ -605,11 +605,23 @@ curl -X PUT http://localhost:8080/api/v1/lists/62ff611b-b155-47f2-9476-cd4a0cad4
 
 ### Duplicate List (with all todos)
 ```bash
+# Default: all copied todos start as incomplete
 curl -X POST http://localhost:8080/api/v1/lists/62ff611b-b155-47f2-9476-cd4a0cad400c/duplicate \
   -H "Authorization: Bearer [TOKEN]"
+
+# With keep_completed=true: preserve completed status of todos
+curl -X POST http://localhost:8080/api/v1/lists/62ff611b-b155-47f2-9476-cd4a0cad400c/duplicate \
+  -H "Authorization: Bearer [TOKEN]" \
+  -H "Content-Type: application/json" \
+  -d '{"keep_completed": true}'
 ```
 
-**Response:**
+**Optional Request Body:**
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `keep_completed` | bool | `false` | If `true`, completed todos stay completed in the copy. If `false`, all copied todos start as incomplete. |
+
+**Response (keep_completed=false, default):**
 ```json
 {
   "success": true,
@@ -670,11 +682,23 @@ curl -X POST http://localhost:8080/api/v1/lists/62ff611b-b155-47f2-9476-cd4a0cad
 
 ### Import Shared List (Step 2: Friend imports with the token)
 ```bash
+# Default: all imported todos start as incomplete
 curl -X POST http://localhost:8080/api/v1/lists/import/62ff611bb15547f29476cd4a0cad400ca1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6 \
   -H "Authorization: Bearer [FRIEND_TOKEN]"
+
+# With keep_completed=true: preserve completed status from the source list
+curl -X POST http://localhost:8080/api/v1/lists/import/62ff611bb15547f29476cd4a0cad400ca1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6 \
+  -H "Authorization: Bearer [FRIEND_TOKEN]" \
+  -H "Content-Type: application/json" \
+  -d '{"keep_completed": true}'
 ```
 
-**Response:**
+**Optional Request Body:**
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `keep_completed` | bool | `false` | If `true`, completed todos from the source list stay completed in the imported copy. If `false`, all imported todos start as incomplete. |
+
+**Response (keep_completed=false, default):**
 ```json
 {
   "success": true,
@@ -716,6 +740,7 @@ curl -X POST http://localhost:8080/api/v1/lists/import/62ff611bb15547f29476cd4a0
 3. Friend calls `POST /api/v1/lists/import/:token` → list + todos are copied to their account
 4. The import creates a completely independent copy — changes by either user won't affect the other
 5. You cannot import your own list (use duplicate instead)
+6. Both duplicate and import accept an optional `keep_completed` body field to preserve todo completion status
 
 ---
 

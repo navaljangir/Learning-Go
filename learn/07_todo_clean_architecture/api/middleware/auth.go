@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"net/http"
 	"strings"
 	"todo_app/pkg/constants"
 	"todo_app/pkg/utils"
@@ -15,7 +16,7 @@ func AuthMiddleware(jwtUtil *utils.JWTUtil) gin.HandlerFunc {
 		// Get authorization header
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			utils.Unauthorized(c, "authorization token required")
+			c.Error(&utils.AppError{Err: utils.ErrInvalidCredentials, Message: "authorization token required", StatusCode: http.StatusUnauthorized})
 			c.Abort()
 			return
 		}
@@ -23,7 +24,7 @@ func AuthMiddleware(jwtUtil *utils.JWTUtil) gin.HandlerFunc {
 		// Check if it's a Bearer token
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || parts[0] != "Bearer" {
-			utils.Unauthorized(c, "invalid authorization header format")
+			c.Error(&utils.AppError{Err: utils.ErrInvalidCredentials, Message: "invalid authorization header format", StatusCode: http.StatusUnauthorized})
 			c.Abort()
 			return
 		}
@@ -31,7 +32,7 @@ func AuthMiddleware(jwtUtil *utils.JWTUtil) gin.HandlerFunc {
 		// Validate token
 		claims, err := jwtUtil.ValidateToken(parts[1])
 		if err != nil {
-			utils.Unauthorized(c, "invalid or expired token")
+			c.Error(&utils.AppError{Err: utils.ErrInvalidCredentials, Message: "invalid or expired token", StatusCode: http.StatusUnauthorized})
 			c.Abort()
 			return
 		}
@@ -39,7 +40,7 @@ func AuthMiddleware(jwtUtil *utils.JWTUtil) gin.HandlerFunc {
 		// Parse user ID
 		userID, err := uuid.Parse(claims.UserID)
 		if err != nil {
-			utils.Unauthorized(c, "invalid user ID in token")
+			c.Error(&utils.AppError{Err: utils.ErrInvalidCredentials, Message: "invalid user ID in token", StatusCode: http.StatusUnauthorized})
 			c.Abort()
 			return
 		}

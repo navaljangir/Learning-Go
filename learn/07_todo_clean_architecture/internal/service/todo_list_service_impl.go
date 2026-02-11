@@ -51,8 +51,6 @@ func NewTodoListService(
 //  3. Take first 32 hex chars of the HMAC (128 bits — plenty for integrity)
 //  4. Concatenate: uuid_hex + hmac_hex_prefix = 64 chars
 //
-// This way the token is unguessable (you need the server secret to forge one)
-// but requires NO database storage — the server can always verify by recomputing.
 func (s *TodoListServiceImpl) generateShareToken(listID uuid.UUID) string {
 	// Remove dashes from UUID: "550e8400-e29b-..." → "550e8400e29b..."
 	uuidHex := strings.ReplaceAll(listID.String(), "-", "")
@@ -240,7 +238,7 @@ func (s *TodoListServiceImpl) Delete(ctx context.Context, listID, userID uuid.UU
 }
 
 // Duplicate creates a copy of a list with all its todos
-func (s *TodoListServiceImpl) Duplicate(ctx context.Context, listID, userID uuid.UUID) (*dto.ListWithTodosResponse, error) {
+func (s *TodoListServiceImpl) Duplicate(ctx context.Context, listID, userID uuid.UUID, req dto.DuplicateListRequest) (*dto.ListWithTodosResponse, error) {
 	// Fetch existing list
 	list, err := s.listRepo.FindByID(ctx, listID)
 	if err != nil {
@@ -298,6 +296,11 @@ func (s *TodoListServiceImpl) Duplicate(ctx context.Context, listID, userID uuid
 		newListID := newList.ID
 		newTodo.ListID = &newListID
 
+		// Preserve completed status if requested
+		if req.KeepCompleted && todo.Completed {
+			newTodo.MarkAsCompleted()
+		}
+
 		if err := s.todoRepo.Create(ctx, newTodo); err != nil {
 			// Consider transaction rollback here in production
 			return nil, &utils.AppError{
@@ -345,7 +348,7 @@ func (s *TodoListServiceImpl) GenerateShareLink(ctx context.Context, listID, use
 }
 
 // ImportSharedList verifies the share token, then copies the list + todos into the caller's account
-func (s *TodoListServiceImpl) ImportSharedList(ctx context.Context, token string, userID uuid.UUID) (*dto.ListWithTodosResponse, error) {
+func (s *TodoListServiceImpl) ImportSharedList(ctx context.Context, token string, userID uuid.UUID, req dto.ImportListRequest) (*dto.ListWithTodosResponse, error) {
 	// Verify the HMAC token and extract list ID
 	listID, err := s.verifyShareToken(token)
 	if err != nil {
@@ -409,6 +412,11 @@ func (s *TodoListServiceImpl) ImportSharedList(ctx context.Context, token string
 		)
 		newListID := newList.ID
 		newTodo.ListID = &newListID
+
+		// Preserve completed status if requested
+		if req.KeepCompleted && todo.Completed {
+			newTodo.MarkAsCompleted()
+		}
 
 		if err := s.todoRepo.Create(ctx, newTodo); err != nil {
 			return nil, &utils.AppError{

@@ -14,14 +14,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// setupTestRouter creates a test router with auth middleware
+// setupTestRouter creates a test router with error handler + auth middleware
 // Returns: router and jwtUtil for creating tokens
 func setupTestRouter(jwtUtil *utils.JWTUtil) *gin.Engine {
 	// Set Gin to test mode (disables debug logs)
 	gin.SetMode(gin.TestMode)
 
-	// Create router with auth middleware
+	// Create router with error handler first, then auth middleware
 	router := gin.New()
+	router.Use(ErrorHandlerMiddleware())
 	router.Use(AuthMiddleware(jwtUtil))
 
 	// Add a protected endpoint
@@ -209,6 +210,7 @@ func TestAuthMiddlewareContextValues(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
+	router.Use(ErrorHandlerMiddleware())
 	router.Use(AuthMiddleware(jwtUtil))
 
 	// Variables to capture context values
@@ -315,6 +317,7 @@ func TestAuthMiddlewareDifferentHTTPMethods(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
+	router.Use(ErrorHandlerMiddleware())
 	router.Use(AuthMiddleware(jwtUtil))
 
 	// Register handlers for different methods
@@ -355,6 +358,7 @@ func TestAuthMiddlewareCallsNext(t *testing.T) {
 	// Track if next middleware was called
 	nextCalled := false
 
+	router.Use(ErrorHandlerMiddleware())
 	router.Use(AuthMiddleware(jwtUtil))
 	router.Use(func(c *gin.Context) {
 		nextCalled = true
@@ -388,6 +392,7 @@ func TestAuthMiddlewareAbortsOnFailure(t *testing.T) {
 	// Track if next middleware was called
 	nextCalled := false
 
+	router.Use(ErrorHandlerMiddleware())
 	router.Use(AuthMiddleware(jwtUtil))
 	router.Use(func(c *gin.Context) {
 		nextCalled = true // Should NOT be called

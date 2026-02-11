@@ -238,6 +238,8 @@ When testing the share functionality:
 5. Test that modifications to shared list don't affect original
 6. Test sharing empty lists
 7. Test sharing lists with many todos (performance)
+8. Test `keep_completed=true` preserves completed status and CompletedAt on duplicated/imported todos
+9. Test `keep_completed=false` (default) resets all copied todos to incomplete
 
 ## Future Enhancements
 

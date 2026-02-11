@@ -4,7 +4,6 @@ import (
 	"todo_app/domain/service"
 	"todo_app/internal/dto"
 	"todo_app/pkg/constants"
-	"todo_app/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -12,6 +11,7 @@ import (
 
 // UserHandler handles user-related HTTP requests
 type UserHandler struct {
+	BaseHandler
 	userService service.UserService
 }
 
@@ -27,7 +27,7 @@ func NewUserHandler(userService service.UserService) UserHandlerInterface {
 // @Produce json
 // @Security BearerAuth
 // @Success 200 {object} dto.UserResponse
-// @Failure 401 {object} utils.Response
+// @Failure 401 {object} handler.Response
 // @Router /api/v1/users/profile [get]
 func (h *UserHandler) GetProfile(c *gin.Context) {
 	userID := c.MustGet(constants.ContextUserID).(uuid.UUID)
@@ -38,7 +38,7 @@ func (h *UserHandler) GetProfile(c *gin.Context) {
 		return
 	}
 
-	utils.Success(c, response)
+	h.Success(c, response)
 }
 
 // UpdateProfile handles updating the current user's profile
@@ -49,7 +49,7 @@ func (h *UserHandler) GetProfile(c *gin.Context) {
 // @Security BearerAuth
 // @Param request body dto.UpdateUserRequest true "Profile update details"
 // @Success 200 {object} dto.UserResponse
-// @Failure 400 {object} utils.Response
+// @Failure 400 {object} handler.Response
 // @Router /api/v1/users/profile [put]
 func (h *UserHandler) UpdateProfile(c *gin.Context) {
 	userID := c.MustGet(constants.ContextUserID).(uuid.UUID)
@@ -66,5 +66,5 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 		return
 	}
 
-	utils.Success(c, response)
+	h.Success(c, response)
 }

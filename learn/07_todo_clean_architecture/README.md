@@ -19,7 +19,7 @@ A production-ready TODO application built with Go, following clean architecture 
 - **Framework:** Gin Web Framework
 - **Database:** MySQL 8.0 (runs in Docker)
 - **Query Builder:** sqlc (type-safe SQL)
-- **Driver:** go-sql-driver/mysql (database/sql)
+- **Driver:** /mysql (database/sql)
 - **Authentication:** JWT (JSON Web Tokens)
 - **Password Hashing:** bcrypt
 

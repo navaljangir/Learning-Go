@@ -12,6 +12,7 @@ import (
 
 // TodoListHandler handles todo list-related HTTP requests
 type TodoListHandler struct {
+	BaseHandler
 	listService service.TodoListService
 }
 
@@ -29,7 +30,7 @@ func NewTodoListHandler(listService service.TodoListService) TodoListHandlerInte
 // @Security BearerAuth
 // @Param request body dto.CreateListRequest true "List details"
 // @Success 201 {object} dto.ListResponse
-// @Failure 400 {object} utils.Response
+// @Failure 400 {object} handler.Response
 // @Router /api/v1/lists [post]
 func (h *TodoListHandler) Create(c *gin.Context) {
 	userID := c.MustGet(constants.ContextUserID).(uuid.UUID)
@@ -46,7 +47,7 @@ func (h *TodoListHandler) Create(c *gin.Context) {
 		return
 	}
 
-	utils.Created(c, response)
+	h.Created(c, response)
 }
 
 // List handles listing all lists for a user
@@ -55,7 +56,7 @@ func (h *TodoListHandler) Create(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Success 200 {object} dto.ListsResponse
-// @Failure 500 {object} utils.Response
+// @Failure 500 {object} handler.Response
 // @Router /api/v1/lists [get]
 func (h *TodoListHandler) List(c *gin.Context) {
 	userID := c.MustGet(constants.ContextUserID).(uuid.UUID)
@@ -66,7 +67,7 @@ func (h *TodoListHandler) List(c *gin.Context) {
 		return
 	}
 
-	utils.Success(c, response)
+	h.Success(c, response)
 }
 
 // GetByID handles getting a specific list with its todos
@@ -76,14 +77,14 @@ func (h *TodoListHandler) List(c *gin.Context) {
 // @Security BearerAuth
 // @Param id path string true "List ID"
 // @Success 200 {object} dto.ListWithTodosResponse
-// @Failure 404 {object} utils.Response
+// @Failure 404 {object} handler.Response
 // @Router /api/v1/lists/{id} [get]
 func (h *TodoListHandler) GetByID(c *gin.Context) {
 	userID := c.MustGet(constants.ContextUserID).(uuid.UUID)
 
 	listID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		utils.BadRequest(c, "invalid list ID")
+		c.Error(&utils.AppError{Err: utils.ErrBadRequest, Message: "invalid list ID", StatusCode: 400})
 		return
 	}
 
@@ -93,7 +94,7 @@ func (h *TodoListHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	utils.Success(c, response)
+	h.Success(c, response)
 }
 
 // Update handles updating a list (rename)
@@ -105,14 +106,14 @@ func (h *TodoListHandler) GetByID(c *gin.Context) {
 // @Param id path string true "List ID"
 // @Param request body dto.UpdateListRequest true "List update details"
 // @Success 200 {object} dto.ListResponse
-// @Failure 400 {object} utils.Response
+// @Failure 400 {object} handler.Response
 // @Router /api/v1/lists/{id} [put]
 func (h *TodoListHandler) Update(c *gin.Context) {
 	userID := c.MustGet(constants.ContextUserID).(uuid.UUID)
 
 	listID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		utils.BadRequest(c, "invalid list ID")
+		c.Error(&utils.AppError{Err: utils.ErrBadRequest, Message: "invalid list ID", StatusCode: 400})
 		return
 	}
 
@@ -128,7 +129,7 @@ func (h *TodoListHandler) Update(c *gin.Context) {
 		return
 	}
 
-	utils.Success(c, response)
+	h.Success(c, response)
 }
 
 // Delete handles deleting a list
@@ -138,15 +139,15 @@ func (h *TodoListHandler) Update(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "List ID"
-// @Success 200 {object} utils.Response
-// @Failure 400 {object} utils.Response
+// @Success 200 {object} handler.Response
+// @Failure 400 {object} handler.Response
 // @Router /api/v1/lists/{id} [delete]
 func (h *TodoListHandler) Delete(c *gin.Context) {
 	userID := c.MustGet(constants.ContextUserID).(uuid.UUID)
 
 	listID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		utils.BadRequest(c, "invalid list ID")
+		c.Error(&utils.AppError{Err: utils.ErrBadRequest, Message: "invalid list ID", StatusCode: 400})
 		return
 	}
 
@@ -155,7 +156,7 @@ func (h *TodoListHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	utils.Success(c, gin.H{"message": "list deleted successfully"})
+	h.Success(c, gin.H{"message": "list deleted successfully"})
 }
 
 // Duplicate handles duplicating a list with all its todos
@@ -166,24 +167,28 @@ func (h *TodoListHandler) Delete(c *gin.Context) {
 // @Security BearerAuth
 // @Param id path string true "List ID"
 // @Success 201 {object} dto.ListWithTodosResponse
-// @Failure 400 {object} utils.Response
+// @Failure 400 {object} handler.Response
 // @Router /api/v1/lists/{id}/duplicate [post]
 func (h *TodoListHandler) Duplicate(c *gin.Context) {
 	userID := c.MustGet(constants.ContextUserID).(uuid.UUID)
 
 	listID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		utils.BadRequest(c, "invalid list ID")
+		c.Error(&utils.AppError{Err: utils.ErrBadRequest, Message: "invalid list ID", StatusCode: 400})
 		return
 	}
 
-	response, err := h.listService.Duplicate(c.Request.Context(), listID, userID)
+	var req dto.DuplicateListRequest
+	// Optional body — ignore bind errors so missing body defaults to KeepCompleted=false
+	c.ShouldBindJSON(&req)
+
+	response, err := h.listService.Duplicate(c.Request.Context(), listID, userID, req)
 	if err != nil {
 		c.Error(err)
 		return
 	}
 
-	utils.Created(c, response)
+	h.Created(c, response)
 }
 
 // GenerateShareLink handles generating a shareable URL for a list
@@ -194,16 +199,16 @@ func (h *TodoListHandler) Duplicate(c *gin.Context) {
 // @Security BearerAuth
 // @Param id path string true "List ID"
 // @Success 200 {object} dto.ShareLinkResponse
-// @Failure 400 {object} utils.Response
-// @Failure 403 {object} utils.Response
-// @Failure 404 {object} utils.Response
+// @Failure 400 {object} handler.Response
+// @Failure 403 {object} handler.Response
+// @Failure 404 {object} handler.Response
 // @Router /api/v1/lists/{id}/share [post]
 func (h *TodoListHandler) GenerateShareLink(c *gin.Context) {
 	userID := c.MustGet(constants.ContextUserID).(uuid.UUID)
 
 	listID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		utils.BadRequest(c, "invalid list ID")
+		c.Error(&utils.AppError{Err: utils.ErrBadRequest, Message: "invalid list ID", StatusCode: 400})
 		return
 	}
 
@@ -213,7 +218,7 @@ func (h *TodoListHandler) GenerateShareLink(c *gin.Context) {
 		return
 	}
 
-	utils.Success(c, response)
+	h.Success(c, response)
 }
 
 // ImportSharedList handles importing a shared list via token
@@ -224,23 +229,27 @@ func (h *TodoListHandler) GenerateShareLink(c *gin.Context) {
 // @Security BearerAuth
 // @Param token path string true "Share token"
 // @Success 201 {object} dto.ListWithTodosResponse
-// @Failure 400 {object} utils.Response
-// @Failure 404 {object} utils.Response
+// @Failure 400 {object} handler.Response
+// @Failure 404 {object} handler.Response
 // @Router /api/v1/lists/import/{token} [post]
 func (h *TodoListHandler) ImportSharedList(c *gin.Context) {
 	userID := c.MustGet(constants.ContextUserID).(uuid.UUID)
 
 	token := c.Param("token")
 	if token == "" {
-		utils.BadRequest(c, "share token is required")
+		c.Error(&utils.AppError{Err: utils.ErrBadRequest, Message: "share token is required", StatusCode: 400})
 		return
 	}
 
-	response, err := h.listService.ImportSharedList(c.Request.Context(), token, userID)
+	var req dto.ImportListRequest
+	// Optional body — ignore bind errors so missing body defaults to KeepCompleted=false
+	c.ShouldBindJSON(&req)
+
+	response, err := h.listService.ImportSharedList(c.Request.Context(), token, userID, req)
 	if err != nil {
 		c.Error(err)
 		return
 	}
 
-	utils.Created(c, response)
+	h.Created(c, response)
 }

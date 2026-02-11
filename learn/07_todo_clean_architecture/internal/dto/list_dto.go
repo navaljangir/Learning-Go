@@ -17,6 +17,16 @@ type UpdateListRequest struct {
 	Name string `json:"name" binding:"required,min=1,max=100"`
 }
 
+// DuplicateListRequest represents a request to duplicate a list
+type DuplicateListRequest struct {
+	KeepCompleted bool `json:"keep_completed"`
+}
+
+// ImportListRequest represents a request to import a shared list
+type ImportListRequest struct {
+	KeepCompleted bool `json:"keep_completed"`
+}
+
 // ShareLinkResponse represents the response when generating a share link
 type ShareLinkResponse struct {
 	ShareURL   string `json:"share_url"`

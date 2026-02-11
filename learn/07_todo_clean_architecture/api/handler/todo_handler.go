@@ -13,6 +13,7 @@ import (
 
 // TodoHandler handles todo-related HTTP requests
 type TodoHandler struct {
+	BaseHandler
 	todoService service.TodoService
 }
 
@@ -38,7 +39,7 @@ func (h *TodoHandler) Create(c *gin.Context) {
 		return
 	}
 
-	utils.Created(c, response)
+	h.Created(c, response)
 }
 
 // List handles listing todos with pagination
@@ -62,7 +63,7 @@ func (h *TodoHandler) List(c *gin.Context) {
 		return
 	}
 
-	utils.Success(c, response)
+	h.Success(c, response)
 }
 
 // GetByID handles getting a specific todo
@@ -71,7 +72,7 @@ func (h *TodoHandler) GetByID(c *gin.Context) {
 
 	todoID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		utils.BadRequest(c, "invalid todo ID")
+		c.Error(&utils.AppError{Err: utils.ErrBadRequest, Message: "invalid todo ID", StatusCode: 400})
 		return
 	}
 
@@ -81,7 +82,7 @@ func (h *TodoHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	utils.Success(c, response)
+	h.Success(c, response)
 }
 
 // Update handles updating a todo
@@ -90,13 +91,13 @@ func (h *TodoHandler) Update(c *gin.Context) {
 
 	todoID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		utils.BadRequest(c, "invalid todo ID")
+		c.Error(&utils.AppError{Err: utils.ErrBadRequest, Message: "invalid todo ID", StatusCode: 400})
 		return
 	}
 
 	var req dto.UpdateTodoRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.BadRequest(c, err.Error())
+		c.Error(err)
 		return
 	}
 
@@ -106,7 +107,7 @@ func (h *TodoHandler) Update(c *gin.Context) {
 		return
 	}
 
-	utils.Success(c, response)
+	h.Success(c, response)
 }
 
 // ToggleComplete handles toggling the completion status of a todo
@@ -115,7 +116,7 @@ func (h *TodoHandler) ToggleComplete(c *gin.Context) {
 
 	todoID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		utils.BadRequest(c, "invalid todo ID")
+		c.Error(&utils.AppError{Err: utils.ErrBadRequest, Message: "invalid todo ID", StatusCode: 400})
 		return
 	}
 
@@ -125,7 +126,7 @@ func (h *TodoHandler) ToggleComplete(c *gin.Context) {
 		return
 	}
 
-	utils.Success(c, response)
+	h.Success(c, response)
 }
 
 // Delete handles deleting a todo
@@ -134,7 +135,7 @@ func (h *TodoHandler) Delete(c *gin.Context) {
 
 	todoID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		utils.BadRequest(c, "invalid todo ID")
+		c.Error(&utils.AppError{Err: utils.ErrBadRequest, Message: "invalid todo ID", StatusCode: 400})
 		return
 	}
 
@@ -143,7 +144,7 @@ func (h *TodoHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	utils.Success(c, gin.H{"message": "todo deleted successfully"})
+	h.Success(c, gin.H{"message": "todo deleted successfully"})
 }
 
 // MoveTodos handles moving multiple todos to a list or to global
@@ -161,5 +162,5 @@ func (h *TodoHandler) MoveTodos(c *gin.Context) {
 		return
 	}
 
-	utils.Success(c, gin.H{"message": "todos moved successfully"})
+	h.Success(c, gin.H{"message": "todos moved successfully"})
 }

@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
+	"todo_app/api/middleware"
 	"todo_app/domain/service"
 	"todo_app/internal/dto"
 	"todo_app/pkg/constants"
@@ -29,9 +30,9 @@ type mockTodoListService struct {
 	listFunc              func(ctx context.Context, userID uuid.UUID) (*dto.ListsResponse, error)
 	updateFunc            func(ctx context.Context, listID, userID uuid.UUID, req dto.UpdateListRequest) (*dto.ListResponse, error)
 	deleteFunc            func(ctx context.Context, listID, userID uuid.UUID) error
-	duplicateFunc         func(ctx context.Context, listID, userID uuid.UUID) (*dto.ListWithTodosResponse, error)
+	duplicateFunc         func(ctx context.Context, listID, userID uuid.UUID, req dto.DuplicateListRequest) (*dto.ListWithTodosResponse, error)
 	generateShareLinkFunc func(ctx context.Context, listID, userID uuid.UUID) (*dto.ShareLinkResponse, error)
-	importSharedListFunc  func(ctx context.Context, token string, userID uuid.UUID) (*dto.ListWithTodosResponse, error)
+	importSharedListFunc  func(ctx context.Context, token string, userID uuid.UUID, req dto.ImportListRequest) (*dto.ListWithTodosResponse, error)
 }
 
 func (m *mockTodoListService) Create(ctx context.Context, userID uuid.UUID, req dto.CreateListRequest) (*dto.ListResponse, error) {
@@ -69,9 +70,9 @@ func (m *mockTodoListService) Delete(ctx context.Context, listID, userID uuid.UU
 	return errors.New("not implemented")
 }
 
-func (m *mockTodoListService) Duplicate(ctx context.Context, listID, userID uuid.UUID) (*dto.ListWithTodosResponse, error) {
+func (m *mockTodoListService) Duplicate(ctx context.Context, listID, userID uuid.UUID, req dto.DuplicateListRequest) (*dto.ListWithTodosResponse, error) {
 	if m.duplicateFunc != nil {
-		return m.duplicateFunc(ctx, listID, userID)
+		return m.duplicateFunc(ctx, listID, userID, req)
 	}
 	return nil, errors.New("not implemented")
 }
@@ -83,9 +84,9 @@ func (m *mockTodoListService) GenerateShareLink(ctx context.Context, listID, use
 	return nil, errors.New("not implemented")
 }
 
-func (m *mockTodoListService) ImportSharedList(ctx context.Context, token string, userID uuid.UUID) (*dto.ListWithTodosResponse, error) {
+func (m *mockTodoListService) ImportSharedList(ctx context.Context, token string, userID uuid.UUID, req dto.ImportListRequest) (*dto.ListWithTodosResponse, error) {
 	if m.importSharedListFunc != nil {
-		return m.importSharedListFunc(ctx, token, userID)
+		return m.importSharedListFunc(ctx, token, userID, req)
 	}
 	return nil, errors.New("not implemented")
 }
@@ -100,22 +101,7 @@ func setupTodoListTestRouter(listService service.TodoListService) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 	router.Use(gin.Recovery())
-
-	// Error handler middleware
-	router.Use(func(c *gin.Context) {
-		c.Next()
-
-		if len(c.Errors) > 0 {
-			err := c.Errors.Last().Err
-			var appErr *utils.AppError
-			if errors.As(err, &appErr) {
-				c.JSON(appErr.StatusCode, gin.H{"error": appErr.Message})
-			} else {
-				c.JSON(500, gin.H{"error": err.Error()})
-			}
-			c.Abort()
-		}
-	})
+	router.Use(middleware.ErrorHandlerMiddleware())
 
 	// Middleware to simulate auth
 	authMiddleware := func(c *gin.Context) {
@@ -418,13 +404,14 @@ func TestTodoListHandler_Delete(t *testing.T) {
 // =============================================================================
 
 func TestTodoListHandler_Duplicate(t *testing.T) {
-	t.Run("success: duplicate list", func(t *testing.T) {
+	t.Run("success: duplicate list without body defaults keep_completed=false", func(t *testing.T) {
 		userID := uuid.New()
 		listID := uuid.New()
 		mockService := &mockTodoListService{
-			duplicateFunc: func(ctx context.Context, lid, uid uuid.UUID) (*dto.ListWithTodosResponse, error) {
+			duplicateFunc: func(ctx context.Context, lid, uid uuid.UUID, req dto.DuplicateListRequest) (*dto.ListWithTodosResponse, error) {
 				assert.Equal(t, listID, lid)
 				assert.Equal(t, userID, uid)
+				assert.False(t, req.KeepCompleted)
 				return &dto.ListWithTodosResponse{
 					ID:     uuid.New(),
 					UserID: userID,
@@ -437,6 +424,36 @@ func TestTodoListHandler_Duplicate(t *testing.T) {
 		router := setupTodoListTestRouter(mockService)
 
 		req := httptest.NewRequest("POST", "/api/v1/lists/"+listID.String()+"/duplicate", nil)
+		req.Header.Set("X-User-ID", userID.String())
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusCreated, w.Code)
+	})
+
+	t.Run("success: duplicate list with keep_completed=true", func(t *testing.T) {
+		userID := uuid.New()
+		listID := uuid.New()
+		mockService := &mockTodoListService{
+			duplicateFunc: func(ctx context.Context, lid, uid uuid.UUID, req dto.DuplicateListRequest) (*dto.ListWithTodosResponse, error) {
+				assert.Equal(t, listID, lid)
+				assert.Equal(t, userID, uid)
+				assert.True(t, req.KeepCompleted)
+				return &dto.ListWithTodosResponse{
+					ID:     uuid.New(),
+					UserID: userID,
+					Name:   "Work Tasks (Copy)",
+					Todos:  []dto.TodoResponse{},
+				}, nil
+			},
+		}
+
+		router := setupTodoListTestRouter(mockService)
+
+		reqBody := dto.DuplicateListRequest{KeepCompleted: true}
+		jsonData, _ := json.Marshal(reqBody)
+		req := httptest.NewRequest("POST", "/api/v1/lists/"+listID.String()+"/duplicate", bytes.NewBuffer(jsonData))
+		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("X-User-ID", userID.String())
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
@@ -485,13 +502,14 @@ func TestTodoListHandler_GenerateShareLink(t *testing.T) {
 // =============================================================================
 
 func TestTodoListHandler_ImportSharedList(t *testing.T) {
-	t.Run("success: import shared list", func(t *testing.T) {
+	t.Run("success: import shared list without body defaults keep_completed=false", func(t *testing.T) {
 		userID := uuid.New()
 		token := "abc123"
 		mockService := &mockTodoListService{
-			importSharedListFunc: func(ctx context.Context, tok string, uid uuid.UUID) (*dto.ListWithTodosResponse, error) {
+			importSharedListFunc: func(ctx context.Context, tok string, uid uuid.UUID, req dto.ImportListRequest) (*dto.ListWithTodosResponse, error) {
 				assert.Equal(t, token, tok)
 				assert.Equal(t, userID, uid)
+				assert.False(t, req.KeepCompleted)
 				return &dto.ListWithTodosResponse{
 					ID:     uuid.New(),
 					UserID: userID,
@@ -511,10 +529,40 @@ func TestTodoListHandler_ImportSharedList(t *testing.T) {
 		assert.Equal(t, http.StatusCreated, w.Code)
 	})
 
+	t.Run("success: import shared list with keep_completed=true", func(t *testing.T) {
+		userID := uuid.New()
+		token := "abc123"
+		mockService := &mockTodoListService{
+			importSharedListFunc: func(ctx context.Context, tok string, uid uuid.UUID, req dto.ImportListRequest) (*dto.ListWithTodosResponse, error) {
+				assert.Equal(t, token, tok)
+				assert.Equal(t, userID, uid)
+				assert.True(t, req.KeepCompleted)
+				return &dto.ListWithTodosResponse{
+					ID:     uuid.New(),
+					UserID: userID,
+					Name:   "Imported List (shared)",
+					Todos:  []dto.TodoResponse{},
+				}, nil
+			},
+		}
+
+		router := setupTodoListTestRouter(mockService)
+
+		reqBody := dto.ImportListRequest{KeepCompleted: true}
+		jsonData, _ := json.Marshal(reqBody)
+		req := httptest.NewRequest("POST", "/api/v1/lists/import/"+token, bytes.NewBuffer(jsonData))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("X-User-ID", userID.String())
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusCreated, w.Code)
+	})
+
 	t.Run("fail: invalid share token", func(t *testing.T) {
 		userID := uuid.New()
 		mockService := &mockTodoListService{
-			importSharedListFunc: func(ctx context.Context, tok string, uid uuid.UUID) (*dto.ListWithTodosResponse, error) {
+			importSharedListFunc: func(ctx context.Context, tok string, uid uuid.UUID, req dto.ImportListRequest) (*dto.ListWithTodosResponse, error) {
 				return nil, &utils.AppError{
 					Err:        utils.ErrBadRequest,
 					Message:    "Invalid or malformed share token",

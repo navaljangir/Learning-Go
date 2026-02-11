@@ -257,7 +257,7 @@ func TestTodoListService_Duplicate(t *testing.T) {
 	userID := uuid.New()
 	otherUserID := uuid.New()
 
-	t.Run("success: duplicate list with todos", func(t *testing.T) {
+	t.Run("success: duplicate list with todos (keep_completed=false)", func(t *testing.T) {
 		listRepo := newMockListRepo()
 		todoRepo := newMockTodoRepo()
 		list := seedList(listRepo, userID, "Original List")
@@ -266,7 +266,7 @@ func TestTodoListService_Duplicate(t *testing.T) {
 
 		svc := NewTodoListService(listRepo, todoRepo, newMockUserRepo(), "secret")
 
-		resp, err := svc.Duplicate(ctx, list.ID, userID)
+		resp, err := svc.Duplicate(ctx, list.ID, userID, dto.DuplicateListRequest{KeepCompleted: false})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
@@ -274,6 +274,41 @@ func TestTodoListService_Duplicate(t *testing.T) {
 		assert.Equal(t, 2, len(resp.Todos))
 		assert.Equal(t, 2, len(listRepo.lists)) // original + copy
 		assert.Equal(t, 4, len(todoRepo.todos)) // 2 original + 2 copied
+		// All copied todos should be incomplete
+		for _, todo := range resp.Todos {
+			assert.False(t, todo.Completed)
+			assert.Nil(t, todo.CompletedAt)
+		}
+	})
+
+	t.Run("success: duplicate list with keep_completed=true", func(t *testing.T) {
+		listRepo := newMockListRepo()
+		todoRepo := newMockTodoRepo()
+		list := seedList(listRepo, userID, "Original List")
+		seedTodoWithList(todoRepo, userID, "Task 1", false, list.ID)
+		seedTodoWithList(todoRepo, userID, "Task 2", true, list.ID) // completed
+
+		svc := NewTodoListService(listRepo, todoRepo, newMockUserRepo(), "secret")
+
+		resp, err := svc.Duplicate(ctx, list.ID, userID, dto.DuplicateListRequest{KeepCompleted: true})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		assert.Equal(t, "Original List (Copy)", resp.Name)
+		assert.Equal(t, 2, len(resp.Todos))
+		// Find the completed and incomplete todos
+		var completedCount, incompleteCount int
+		for _, todo := range resp.Todos {
+			if todo.Completed {
+				completedCount++
+				assert.NotNil(t, todo.CompletedAt)
+			} else {
+				incompleteCount++
+				assert.Nil(t, todo.CompletedAt)
+			}
+		}
+		assert.Equal(t, 1, completedCount)
+		assert.Equal(t, 1, incompleteCount)
 	})
 
 	t.Run("success: duplicate empty list", func(t *testing.T) {
@@ -281,7 +316,7 @@ func TestTodoListService_Duplicate(t *testing.T) {
 		list := seedList(listRepo, userID, "Empty List")
 		svc := NewTodoListService(listRepo, newMockTodoRepo(), newMockUserRepo(), "secret")
 
-		resp, err := svc.Duplicate(ctx, list.ID, userID)
+		resp, err := svc.Duplicate(ctx, list.ID, userID, dto.DuplicateListRequest{})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
@@ -292,7 +327,7 @@ func TestTodoListService_Duplicate(t *testing.T) {
 	t.Run("fail: list not found", func(t *testing.T) {
 		svc := NewTodoListService(newMockListRepo(), newMockTodoRepo(), newMockUserRepo(), "secret")
 
-		resp, err := svc.Duplicate(ctx, uuid.New(), userID)
+		resp, err := svc.Duplicate(ctx, uuid.New(), userID, dto.DuplicateListRequest{})
 
 		assert.Nil(t, resp)
 		assertAppError(t, err, 404, "List not found")
@@ -303,7 +338,7 @@ func TestTodoListService_Duplicate(t *testing.T) {
 		list := seedList(listRepo, userID, "Work Tasks")
 		svc := NewTodoListService(listRepo, newMockTodoRepo(), newMockUserRepo(), "secret")
 
-		resp, err := svc.Duplicate(ctx, list.ID, otherUserID)
+		resp, err := svc.Duplicate(ctx, list.ID, otherUserID, dto.DuplicateListRequest{})
 
 		assert.Nil(t, resp)
 		assertAppError(t, err, 403, "Unauthorized access to this list")
@@ -315,7 +350,7 @@ func TestTodoListService_Duplicate(t *testing.T) {
 		listRepo.createErr = errors.New("db error")
 		svc := NewTodoListService(listRepo, newMockTodoRepo(), newMockUserRepo(), "secret")
 
-		resp, err := svc.Duplicate(ctx, list.ID, userID)
+		resp, err := svc.Duplicate(ctx, list.ID, userID, dto.DuplicateListRequest{})
 
 		assert.Nil(t, resp)
 		assertAppError(t, err, 500, "Failed to create duplicate list")
@@ -330,7 +365,7 @@ func TestTodoListService_Duplicate(t *testing.T) {
 
 		svc := NewTodoListService(listRepo, todoRepo, newMockUserRepo(), "secret")
 
-		resp, err := svc.Duplicate(ctx, list.ID, userID)
+		resp, err := svc.Duplicate(ctx, list.ID, userID, dto.DuplicateListRequest{})
 
 		assert.Nil(t, resp)
 		assertAppError(t, err, 500, "Failed to duplicate todos")
@@ -382,32 +417,68 @@ func TestTodoListService_ImportSharedList(t *testing.T) {
 	ownerID := uuid.New()
 	importerID := uuid.New()
 
-	t.Run("success: import shared list", func(t *testing.T) {
+	t.Run("success: import shared list (keep_completed=false)", func(t *testing.T) {
 		listRepo := newMockListRepo()
 		todoRepo := newMockTodoRepo()
 		list := seedList(listRepo, ownerID, "Shared List")
 		seedTodoWithList(todoRepo, ownerID, "Task 1", false, list.ID)
+		seedTodoWithList(todoRepo, ownerID, "Task 2", true, list.ID) // completed
 
 		svc := NewTodoListService(listRepo, todoRepo, newMockUserRepo(), "secret")
 
-		// Generate share token
 		shareResp, _ := svc.GenerateShareLink(ctx, list.ID, ownerID)
 
-		// Import using token
-		resp, err := svc.ImportSharedList(ctx, shareResp.ShareToken, importerID)
+		resp, err := svc.ImportSharedList(ctx, shareResp.ShareToken, importerID, dto.ImportListRequest{KeepCompleted: false})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.Equal(t, "Shared List (shared)", resp.Name)
 		assert.Equal(t, importerID, resp.UserID)
-		assert.Equal(t, 1, len(resp.Todos))
-		assert.Equal(t, 2, len(listRepo.lists)) // original + imported
+		assert.Equal(t, 2, len(resp.Todos))
+		// All imported todos should be incomplete
+		for _, todo := range resp.Todos {
+			assert.False(t, todo.Completed)
+			assert.Nil(t, todo.CompletedAt)
+		}
+	})
+
+	t.Run("success: import shared list with keep_completed=true", func(t *testing.T) {
+		listRepo := newMockListRepo()
+		todoRepo := newMockTodoRepo()
+		list := seedList(listRepo, ownerID, "Shared List")
+		seedTodoWithList(todoRepo, ownerID, "Task 1", false, list.ID)
+		seedTodoWithList(todoRepo, ownerID, "Task 2", true, list.ID) // completed
+
+		svc := NewTodoListService(listRepo, todoRepo, newMockUserRepo(), "secret")
+
+		shareResp, _ := svc.GenerateShareLink(ctx, list.ID, ownerID)
+
+		resp, err := svc.ImportSharedList(ctx, shareResp.ShareToken, importerID, dto.ImportListRequest{KeepCompleted: true})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		assert.Equal(t, "Shared List (shared)", resp.Name)
+		assert.Equal(t, importerID, resp.UserID)
+		assert.Equal(t, 2, len(resp.Todos))
+		// One should be completed, one should not
+		var completedCount, incompleteCount int
+		for _, todo := range resp.Todos {
+			if todo.Completed {
+				completedCount++
+				assert.NotNil(t, todo.CompletedAt)
+			} else {
+				incompleteCount++
+				assert.Nil(t, todo.CompletedAt)
+			}
+		}
+		assert.Equal(t, 1, completedCount)
+		assert.Equal(t, 1, incompleteCount)
 	})
 
 	t.Run("fail: invalid token format", func(t *testing.T) {
 		svc := NewTodoListService(newMockListRepo(), newMockTodoRepo(), newMockUserRepo(), "secret")
 
-		resp, err := svc.ImportSharedList(ctx, "invalid-token", importerID)
+		resp, err := svc.ImportSharedList(ctx, "invalid-token", importerID, dto.ImportListRequest{})
 
 		assert.Nil(t, resp)
 		assertAppError(t, err, 400, "Invalid or malformed share token")
@@ -419,9 +490,9 @@ func TestTodoListService_ImportSharedList(t *testing.T) {
 		svc := NewTodoListService(listRepo, newMockTodoRepo(), newMockUserRepo(), "secret")
 
 		shareResp, _ := svc.GenerateShareLink(ctx, list.ID, ownerID)
-		tamperedToken := shareResp.ShareToken[:62] + "xx" // Change last 2 chars
+		tamperedToken := shareResp.ShareToken[:62] + "xx"
 
-		resp, err := svc.ImportSharedList(ctx, tamperedToken, importerID)
+		resp, err := svc.ImportSharedList(ctx, tamperedToken, importerID, dto.ImportListRequest{})
 
 		assert.Nil(t, resp)
 		assertAppError(t, err, 400, "Invalid or malformed share token")
@@ -434,10 +505,9 @@ func TestTodoListService_ImportSharedList(t *testing.T) {
 
 		shareResp, _ := svc.GenerateShareLink(ctx, list.ID, ownerID)
 
-		// Delete the list
 		delete(listRepo.lists, list.ID)
 
-		resp, err := svc.ImportSharedList(ctx, shareResp.ShareToken, importerID)
+		resp, err := svc.ImportSharedList(ctx, shareResp.ShareToken, importerID, dto.ImportListRequest{})
 
 		assert.Nil(t, resp)
 		assertAppError(t, err, 404, "Shared list not found")
@@ -450,7 +520,7 @@ func TestTodoListService_ImportSharedList(t *testing.T) {
 
 		shareResp, _ := svc.GenerateShareLink(ctx, list.ID, ownerID)
 
-		resp, err := svc.ImportSharedList(ctx, shareResp.ShareToken, ownerID) // Same user
+		resp, err := svc.ImportSharedList(ctx, shareResp.ShareToken, ownerID, dto.ImportListRequest{})
 
 		assert.Nil(t, resp)
 		assertAppError(t, err, 400, "Cannot import your own list, use duplicate instead")
@@ -464,7 +534,7 @@ func TestTodoListService_ImportSharedList(t *testing.T) {
 		shareResp, _ := svc.GenerateShareLink(ctx, list.ID, ownerID)
 		listRepo.createErr = errors.New("db error")
 
-		resp, err := svc.ImportSharedList(ctx, shareResp.ShareToken, importerID)
+		resp, err := svc.ImportSharedList(ctx, shareResp.ShareToken, importerID, dto.ImportListRequest{})
 
 		assert.Nil(t, resp)
 		assertAppError(t, err, 500, "Failed to create imported list")

@@ -28,8 +28,9 @@ type TodoListService interface {
 	Delete(ctx context.Context, listID, userID uuid.UUID) error
 
 	// Duplicate creates a copy of a list with all its todos
+	// If req.KeepCompleted is true, completed status is preserved; otherwise all todos start incomplete
 	// Returns error if list doesn't exist or user is not authorized
-	Duplicate(ctx context.Context, listID, userID uuid.UUID) (*dto.ListWithTodosResponse, error)
+	Duplicate(ctx context.Context, listID, userID uuid.UUID, req dto.DuplicateListRequest) (*dto.ListWithTodosResponse, error)
 
 	// GenerateShareLink generates a shareable URL with a random token for a list
 	// If the list already has a token, returns the existing one (idempotent)
@@ -38,6 +39,7 @@ type TodoListService interface {
 
 	// ImportSharedList imports a shared list (and its todos) into the caller's account
 	// Creates a new independent copy of the list and all its todos
+	// If req.KeepCompleted is true, completed status is preserved; otherwise all todos start incomplete
 	// Returns error if token is invalid or caller is the list owner
-	ImportSharedList(ctx context.Context, token string, userID uuid.UUID) (*dto.ListWithTodosResponse, error)
+	ImportSharedList(ctx context.Context, token string, userID uuid.UUID, req dto.ImportListRequest) (*dto.ListWithTodosResponse, error)
 }

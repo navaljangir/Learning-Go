@@ -3,14 +3,13 @@ package handler
 import (
 	"todo_app/domain/service"
 	"todo_app/internal/dto"
-	"todo_app/pkg/utils"
-	"todo_app/pkg/validator"
 
 	"github.com/gin-gonic/gin"
 )
 
 // AuthHandler handles authentication-related HTTP requests
 type AuthHandler struct {
+	BaseHandler
 	userService service.UserService
 }
 
@@ -28,20 +27,11 @@ func NewAuthHandler(userService service.UserService) AuthHandlerInterface {
 // @Produce json
 // @Param request body dto.RegisterRequest true "Registration details"
 // @Success 201 {object} dto.LoginResponse
-// @Failure 400 {object} utils.Response	
+// @Failure 400 {object} handler.Response	
 // @Router /api/v1/auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req dto.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		// Get user-friendly validation errors
-		validationErrors := validator.GetValidationErrors(err)
-		if len(validationErrors) > 0 {
-			c.JSON(400, gin.H{
-				"error":  "Validation failed",
-				"fields": validationErrors,
-			})
-			return
-		}
 		c.Error(err)
 		return
 	}
@@ -52,7 +42,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	utils.Created(c, response)
+	h.Created(c, response)
 }
 
 // Login handles user login
@@ -62,20 +52,11 @@ func (h *AuthHandler) Register(c *gin.Context) {
 // @Produce json
 // @Param request body dto.LoginRequest true "Login credentials"
 // @Success 200 {object} dto.LoginResponse
-// @Failure 401 {object} utils.Response
+// @Failure 401 {object} handler.Response
 // @Router /api/v1/auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req dto.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		// Get user-friendly validation errors
-		validationErrors := validator.GetValidationErrors(err)
-		if len(validationErrors) > 0 {
-			c.JSON(400, gin.H{
-				"error":  "Validation failed",
-				"fields": validationErrors,
-			})
-			return
-		}
 		c.Error(err)
 		return
 	}
@@ -86,5 +67,5 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	utils.Success(c, response)
+	h.Success(c, response)
 }

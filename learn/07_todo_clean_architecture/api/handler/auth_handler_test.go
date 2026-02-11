@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
+	"todo_app/api/middleware"
 	"todo_app/domain/service"
 	"todo_app/internal/dto"
 	"todo_app/pkg/utils"
@@ -68,22 +69,7 @@ func setupAuthTestRouter(userService service.UserService) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 	router.Use(gin.Recovery())
-
-	// Add error handler middleware
-	router.Use(func(c *gin.Context) {
-		c.Next()
-
-		if len(c.Errors) > 0 {
-			err := c.Errors.Last().Err
-			var appErr *utils.AppError
-			if errors.As(err, &appErr) {
-				c.JSON(appErr.StatusCode, gin.H{"error": appErr.Message})
-			} else {
-				c.JSON(500, gin.H{"error": err.Error()})
-			}
-			c.Abort()
-		}
-	})
+	router.Use(middleware.ErrorHandlerMiddleware())
 
 	handler := NewAuthHandler(userService)
 	router.POST("/api/v1/auth/register", handler.Register)
@@ -138,11 +124,13 @@ func TestAuthHandler_Register(t *testing.T) {
 
 		assert.Equal(t, http.StatusCreated, w.Code)
 
-		var resp dto.LoginResponse
-		err := json.Unmarshal(w.Body.Bytes(), &resp)
+		var wrapper struct {
+			Data dto.LoginResponse `json:"data"`
+		}
+		err := json.Unmarshal(w.Body.Bytes(), &wrapper)
 		assert.NoError(t, err)
-		assert.Equal(t, "jwt-token-here", resp.Token)
-		assert.Equal(t, "john_doe", resp.User.Username)
+		assert.Equal(t, "jwt-token-here", wrapper.Data.Token)
+		assert.Equal(t, "john_doe", wrapper.Data.User.Username)
 	})
 
 	t.Run("fail: username already exists", func(t *testing.T) {
@@ -247,11 +235,13 @@ func TestAuthHandler_Login(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 
-		var resp dto.LoginResponse
-		err := json.Unmarshal(w.Body.Bytes(), &resp)
+		var wrapper struct {
+			Data dto.LoginResponse `json:"data"`
+		}
+		err := json.Unmarshal(w.Body.Bytes(), &wrapper)
 		assert.NoError(t, err)
-		assert.Equal(t, "jwt-token-here", resp.Token)
-		assert.Equal(t, "john_doe", resp.User.Username)
+		assert.Equal(t, "jwt-token-here", wrapper.Data.Token)
+		assert.Equal(t, "john_doe", wrapper.Data.User.Username)
 	})
 
 	t.Run("fail: invalid credentials", func(t *testing.T) {
