@@ -10,7 +10,7 @@ import (
 
 	"todo_app/api/handler"
 	"todo_app/api/router"
-	serviceImpl "todo_app/internal/service"
+	serviceImpl "todo_app/service"
 	"todo_app/pkg/utils"
 	customValidator "todo_app/pkg/validator"
 

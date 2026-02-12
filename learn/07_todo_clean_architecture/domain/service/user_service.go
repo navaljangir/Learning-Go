@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"todo_app/internal/dto"
+	"todo_app/dto"
 
 	"github.com/google/uuid"
 )

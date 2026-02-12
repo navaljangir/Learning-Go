@@ -18,6 +18,10 @@ func setupRouter() *gin.Engine {
 	v1 := r.Group("/api/v1")
 	v1.Use()
 
+	// auth := v1.Group("auth")
+	// auth.POST("/register", authHandler.Register)
+	// auth.POST("/login", authHandler.Login)
+ 
 	// Health check endpoint (public)
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{

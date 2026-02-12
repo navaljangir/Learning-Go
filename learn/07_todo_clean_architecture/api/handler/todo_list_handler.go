@@ -2,7 +2,7 @@ package handler
 
 import (
 	"todo_app/domain/service"
-	"todo_app/internal/dto"
+	"todo_app/dto"
 	"todo_app/pkg/constants"
 	"todo_app/pkg/utils"
 

@@ -13,9 +13,9 @@ import (
 	"todo_app/config"
 	"todo_app/domain/repository"
 	"todo_app/domain/service"
-	db_repo "todo_app/internal/repository"
-	"todo_app/internal/repository/sqlc_impl"
-	serviceImpl "todo_app/internal/service"
+	db_repo "todo_app/repository"
+	"todo_app/repository/sqlc_impl"
+	serviceImpl "todo_app/service"
 	"todo_app/pkg/utils"
 	customValidator "todo_app/pkg/validator"
 
